@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 320" role="img" aria-label="Aqua Classic Water Filter logo">
+  <defs>
+    <linearGradient id="aquaBadgeGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#152A44"/>
+      <stop offset="55%" stop-color="#1E5F9E"/>
+      <stop offset="100%" stop-color="#4FB3E8"/>
+    </linearGradient>
+    <linearGradient id="aquaDropGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#EAF6FF" stop-opacity="0.98"/>
+      <stop offset="100%" stop-color="#BFE7FF" stop-opacity="0.95"/>
+    </linearGradient>
+  </defs>
+  <rect width="860" height="320" fill="none"/>
+  <g transform="translate(42 34)">
+    <circle cx="126" cy="126" r="110" fill="url(#aquaBadgeGradient)"/>
+    <path d="M127 46C97 80 82 108 82 138c0 30 21 56 47 56s48-19 48-46c0-20-10-34-17-49-8-16-10-35-33-53Z" fill="url(#aquaDropGradient)" stroke="#FFFFFF" stroke-width="8" stroke-linejoin="round"/>
+    <path d="M67 190c30-10 58-6 86 4 26 9 51 11 80 4" fill="none" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round" opacity="0.96"/>
+    <path d="M58 205c32-11 63-7 93 2 29 9 56 12 87 5" fill="none" stroke="#0B2545" stroke-width="8" stroke-linecap="round" opacity="0.95"/>
+    <path d="M54 220c34-10 66-7 96 2 28 8 54 11 84 5" fill="none" stroke="#152A44" stroke-width="7" stroke-linecap="round" opacity="0.92"/>
+    <path d="M49 234c36-8 68-5 98 4 27 8 55 10 82 4" fill="none" stroke="#1E5F9E" stroke-width="6" stroke-linecap="round" opacity="0.9"/>
+  </g>
+  <g transform="translate(315 92)">
+    <text x="0" y="0" fill="#0B2545" font-size="96" font-weight="800" letter-spacing="1" font-family="Inter, Segoe UI, Arial, sans-serif">AQUA</text>
+    <text x="0" y="82" fill="#1E5F9E" font-size="78" font-weight="800" letter-spacing="0.8" font-family="Inter, Segoe UI, Arial, sans-serif">CLASSIC</text>
+    <text x="0" y="138" fill="#4A6178" font-size="32" font-weight="700" letter-spacing="2.2" font-family="Inter, Segoe UI, Arial, sans-serif">WATER FILTER</text>
+  </g>
+</svg>
