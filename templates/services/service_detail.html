@@ -1,0 +1,29 @@
+{% extends "generic/detail.html" %}
+{% block content %}
+<section class="page-panel">
+  <div class="section-head">
+    <div>
+      <h2 class="h4 mb-1">{{ page_title }}</h2>
+      <p class="text-secondary small mb-0">Job Sheet & Representative Visit Info</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-outline-primary" href="{% url 'services:service-edit' ticket.pk %}">Edit Ticket</a>
+      {% if can_manage %}
+        <a class="btn btn-outline-danger" href="{% url 'services:service-delete' ticket.pk %}">Delete</a>
+      {% endif %}
+      <a class="btn btn-outline-secondary" href="{% url 'services:service-list' %}">Back to Services</a>
+    </div>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-body">
+      <dl class="row mb-0 g-3">
+        {% for field in details %}
+          <dt class="col-sm-4 col-md-3 text-secondary">{{ field.label }}</dt>
+          <dd class="col-sm-8 col-md-9 mb-0 text-white">{{ field.value|default:"—" }}</dd>
+        {% endfor %}
+      </dl>
+    </div>
+  </div>
+</section>
+{% endblock %}

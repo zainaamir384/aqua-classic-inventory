@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block page_title %}Owner Profile{% endblock %}
+{% block title %}Owner Profile{% endblock %}
+
+{% block content %}
+<section class="page-shell">
+  <div class="row justify-content-center">
+    <div class="col-12 col-lg-9 col-xl-8">
+      <div class="card p-4 mb-4">
+        <div class="d-flex flex-wrap align-items-center gap-4">
+          <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fs-2 fw-bold" style="width: 72px; height: 72px; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)) !important;">
+            {{ owner.username|slice:':1'|upper }}
+          </div>
+          <div>
+            <h2 class="h4 mb-1 text-white">{{ owner.get_full_name|default:owner.username }}</h2>
+            <p class="text-secondary mb-1">
+              <span class="badge bg-primary-subtle text-primary border me-2">{{ owner.role|default:"OWNER" }}</span>
+              System Administrator / Shop Owner
+            </p>
+            <small class="text-secondary">Username: <strong>{{ owner.username }}</strong> | Registered Email: <strong>{{ owner.email|default:"No email registered yet" }}</strong></small>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-4">
+        <div class="col-md-4">
+          <div class="card text-center p-3">
+            <span class="text-secondary small fw-bold">TOTAL SKUS MANAGED</span>
+            <div class="fs-3 fw-bold text-white mt-1">{{ total_products }}</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card text-center p-3">
+            <span class="text-secondary small fw-bold">TOTAL SALES LOGGED</span>
+            <div class="fs-3 fw-bold text-success mt-1">{{ total_sales_count }}</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card text-center p-3">
+            <span class="text-secondary small fw-bold">MY MOVEMENTS LOGGED</span>
+            <div class="fs-3 fw-bold text-info mt-1">{{ my_movements_count }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card p-4">
+        <h3 class="h5 mb-3 text-white">Account Settings & Security</h3>
+        <div class="d-flex flex-wrap gap-2">
+          <a href="{% url 'accounts:change-password' %}" class="btn btn-primary btn-sm px-3">🔐 Change My Password</a>
+          <a href="{% url 'accounts:profile-edit' %}" class="btn btn-outline-info btn-sm px-3">✏️ Edit Username, Email & Profile Info</a>
+          {% if owner.is_superuser or owner.role == "OWNER" %}
+            <a href="{% url 'accounts:staff-list' %}" class="btn btn-outline-primary btn-sm px-3">👥 Manage Staff Accounts</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

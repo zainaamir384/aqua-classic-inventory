@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Aqua Classic badge">
+  <defs>
+    <linearGradient id="aquaBadgeGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#152A44"/>
+      <stop offset="55%" stop-color="#1E5F9E"/>
+      <stop offset="100%" stop-color="#4FB3E8"/>
+    </linearGradient>
+    <linearGradient id="aquaDropGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#EAF6FF" stop-opacity="0.98"/>
+      <stop offset="100%" stop-color="#BFE7FF" stop-opacity="0.95"/>
+    </linearGradient>
+  </defs>
+  <circle cx="128" cy="128" r="112" fill="url(#aquaBadgeGradient)"/>
+  <path d="M127 44C97 79 82 107 82 138c0 30 21 56 47 56s48-19 48-46c0-20-10-34-17-49-8-16-10-35-33-53Z" fill="url(#aquaDropGradient)" stroke="#FFFFFF" stroke-width="8" stroke-linejoin="round"/>
+  <path d="M61 188c30-11 60-7 89 3 27 9 52 11 85 4" fill="none" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round"/>
+  <path d="M56 203c31-10 62-7 92 2 28 8 53 11 84 5" fill="none" stroke="#0B2545" stroke-width="8" stroke-linecap="round"/>
+  <path d="M50 218c34-10 66-7 96 3 27 8 52 11 83 5" fill="none" stroke="#152A44" stroke-width="7" stroke-linecap="round"/>
+  <path d="M46 232c36-8 68-5 98 4 27 8 55 10 82 4" fill="none" stroke="#1E5F9E" stroke-width="6" stroke-linecap="round"/>
+</svg>

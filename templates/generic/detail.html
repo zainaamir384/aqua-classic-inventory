@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block page_title %}{{ page_title }}{% endblock %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block content %}
+<section class="page-panel">
+  <div class="section-head">
+    <div>
+      <h2 class="h4 mb-1">{{ page_title }}</h2>
+      {% if page_subtitle %}<p class="text-secondary mb-0">{{ page_subtitle }}</p>{% endif %}
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-outline-primary" href="{{ edit_url }}">Edit</a>
+      {% if delete_url %}<a class="btn btn-outline-danger" href="{{ delete_url }}">Delete</a>{% endif %}
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <dl class="row mb-0 g-3">
+        {% for field in details %}
+          <dt class="col-sm-4 col-md-3 text-secondary">{{ field.label }}</dt>
+          <dd class="col-sm-8 col-md-9 mb-0">{{ field.value }}</dd>
+        {% endfor %}
+      </dl>
+    </div>
+  </div>
+  {% if bom_items %}
+  <div class="card">
+    <div class="card-body">
+      <h2 class="h5 mb-3">Bill of Materials</h2>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead><tr><th>Component</th><th>Quantity</th></tr></thead>
+          <tbody>
+            {% for item in bom_items %}
+              <tr><td>{{ item.component }}</td><td>{{ item.quantity }}</td></tr>
+            {% empty %}
+              <tr><td colspan="2" class="empty-state">No BOM lines.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

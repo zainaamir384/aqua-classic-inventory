@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block page_title %}Inventory & Stock Advisory Reports{% endblock %}
+{% block title %}Inventory & Stock Advisory Reports{% endblock %}
+
+{% block content %}
+<section class="page-shell">
+  <!-- Page Header -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+      <h1 class="h3 text-white mb-1">Reports & Stock Advisory</h1>
+      <p class="text-secondary small mb-0">Live stock valuation, movement audit history, and low inventory reorder warnings</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{% url 'reports:valuation' %}" class="btn btn-outline-info btn-sm">Stock Valuation</a>
+      <a href="{% url 'reports:movements' %}" class="btn btn-outline-secondary btn-sm">Movement History</a>
+    </div>
+  </div>
+
+  <!-- Summary KPI Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-sm-3">
+      <div class="kpi-card">
+        <div class="kpi-card__label mb-1">TOTAL PRODUCTS IN CATALOG</div>
+        <div class="kpi-value text-white">{{ total_products }} Items</div>
+      </div>
+    </div>
+    <div class="col-12 col-sm-3">
+      <div class="kpi-card" style="border-left: 4px solid var(--accent-rose) !important;">
+        <div class="kpi-card__label text-danger mb-1">🚨 OUT OF STOCK (0 PCS)</div>
+        <div class="kpi-value text-danger">{{ out_of_stock_count }} Items</div>
+      </div>
+    </div>
+    <div class="col-12 col-sm-3">
+      <div class="kpi-card" style="border-left: 4px solid #f59e0b !important;">
+        <div class="kpi-card__label text-warning mb-1">⚠️ LOW STOCK (1 - 10 PCS)</div>
+        <div class="kpi-value text-warning">{{ low_stock_count }} Items</div>
+      </div>
+    </div>
+    <div class="col-12 col-sm-3">
+      <div class="kpi-card" style="border-left: 4px solid var(--accent-emerald) !important;">
+        <div class="kpi-card__label text-emerald mb-1">✅ HEALTHY STOCK (> 10 PCS)</div>
+        <div class="kpi-value text-emerald">{{ healthy_stock_count }} Items</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOW & OUT OF STOCK ADVISORY TABLE (Threshold <= 10 pcs) -->
+  <div class="card mb-4">
+    <div class="card-body p-4">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div>
+          <h2 class="h5 mb-0 text-white d-flex align-items-center gap-2">
+            ⚠️ Low & Out of Stock Reorder Advisory
+            <span class="badge bg-warning-subtle text-warning border px-2 py-1">Stock ≤ 10 pcs</span>
+          </h2>
+          <p class="text-secondary small mb-0 mt-1">Items requiring immediate reordering or restocking (Quantity is 10 pcs or lower)</p>
+        </div>
+        <a href="{% url 'reports:low-stock' %}?format=pdf" class="btn btn-xs btn-outline-danger py-1 px-3">📄 Download PDF Report</a>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" style="font-size: 0.86rem;">
+          <thead class="table-light">
+            <tr>
+              <th>Product Name & SKU</th>
+              <th>Category</th>
+              <th class="text-center">Current Stock</th>
+              <th>Stock Advisory Status</th>
+              <th class="text-end">Cost Price</th>
+              <th class="text-end">Total Valuation</th>
+              <th class="text-end">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in low_or_zero_items %}
+              <tr>
+                <td>
+                  <strong class="text-white d-block">{{ item.object.name }}</strong>
+                  <small class="text-secondary">SKU: {{ item.object.sku|default:"N/A" }}</small>
+                </td>
+                <td>
+                  <span class="badge bg-secondary-subtle border text-body py-1 px-2">
+                    {{ item.object.category.name|default:"Uncategorized" }}
+                  </span>
+                </td>
+                <td class="text-center fw-bold fs-6">
+                  {% if item.stock <= 0 %}
+                    <span class="text-danger">0 pcs</span>
+                  {% else %}
+                    <span class="text-warning">{{ item.stock }} pcs</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if item.stock <= 0 %}
+                    <span class="badge bg-danger-subtle text-danger border px-2 py-1">
+                      🚨 OUT OF STOCK (0 pcs)
+                    </span>
+                  {% else %}
+                    <span class="badge bg-warning-subtle text-warning border px-2 py-1">
+                      ⚠️ LOW STOCK ({{ item.stock }} pcs left)
+                    </span>
+                  {% endif %}
+                </td>
+                <td class="text-end text-secondary">
+                  PKR {{ item.object.cost_price|floatformat:2 }}
+                </td>
+                <td class="text-end fw-semibold text-white">
+                  PKR {{ item.value|floatformat:2 }}
+                </td>
+                <td class="text-end">
+                  <a href="{% url 'catalog:product-list' %}" class="btn btn-xs btn-outline-primary py-1 px-2">
+                    + Restock Inventory
+                  </a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="7" class="text-center py-4 text-emerald">
+                  🎉 Great news! All products in your inventory currently have healthy stock levels (> 10 pcs)!
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Report Shortcut Cards -->
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="card p-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h3 class="h6 text-white mb-1">📦 Stock Valuation Report</h3>
+            <p class="text-secondary small mb-0">Complete itemized valuation of all inventory by location and purchase cost.</p>
+          </div>
+          <a href="{% url 'reports:valuation' %}" class="btn btn-sm btn-outline-info text-nowrap ms-2">View Valuation</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card p-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h3 class="h6 text-white mb-1">📜 Stock Movement History</h3>
+            <p class="text-secondary small mb-0">Full audit trail of all purchases, sales, assembly deductions, and adjustments.</p>
+          </div>
+          <a href="{% url 'reports:movements' %}" class="btn btn-sm btn-outline-secondary text-nowrap ms-2">View Audit Log</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

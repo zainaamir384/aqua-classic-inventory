@@ -1,0 +1,30 @@
+{% extends "generic/detail.html" %}
+{% block content %}
+<section class="page-panel">
+  <div class="section-head">
+    <div>
+      <h2 class="h4 mb-1">{{ page_title }}</h2>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-outline-primary" href="{{ edit_url }}">Edit</a>
+      <a class="btn btn-outline-danger" href="{{ delete_url }}">Delete</a>
+    </div>
+  </div>
+  <div class="card mb-0">
+    <div class="card-body">
+      <dl class="row mb-0 g-3">{% for field in details %}<dt class="col-sm-4 col-md-3 text-secondary">{{ field.label }}</dt><dd class="col-sm-8 col-md-9 mb-0">{{ field.value }}</dd>{% endfor %}</dl>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <h2 class="h5 mb-3">Items</h2>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead><tr><th>Product</th><th>Qty</th><th>Sale Price</th></tr></thead>
+          <tbody>{% for item in items %}<tr><td>{{ item.product }}</td><td class="numeric">{{ item.quantity }}</td><td>{{ item.sale_price }}</td></tr>{% empty %}<tr><td colspan="3" class="empty-state">No items.</td></tr>{% endfor %}</tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

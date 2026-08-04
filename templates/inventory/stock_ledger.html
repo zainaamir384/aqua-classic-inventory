@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block page_title %}{{ page_title }}{% endblock %}
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<section class="page-panel">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+    <div>
+      <h2 class="h5 mb-1">{{ page_title }}</h2>
+      <p class="text-secondary small mb-0">{{ page_subtitle }}</p>
+    </div>
+    <div>
+      <a href="{% url 'catalog:product-list' %}" class="btn btn-sm btn-outline-primary">
+        + Go to Products to Add/Deduct Stock
+      </a>
+    </div>
+  </div>
+
+  <!-- Category & Movement Filter Bar -->
+  <div class="card mb-3 p-3">
+    <form method="get" class="row g-2 align-items-center">
+      <div class="col-12 col-md-4">
+        <label for="categorySelect" class="form-label small mb-1 fw-bold">Filter by Category</label>
+        <select name="category" id="categorySelect" class="form-select form-select-sm" onchange="this.form.submit()">
+          <option value="">-- All Categories (Show Everything) --</option>
+          {% for cat in categories %}
+            <option value="{{ cat.pk }}" {% if selected_category == cat.pk|slugify %}selected{% endif %}>
+              {{ cat.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-12 col-md-3">
+        <label for="typeSelect" class="form-label small mb-1 fw-bold">Movement Type</label>
+        <select name="movement_type" id="typeSelect" class="form-select form-select-sm" onchange="this.form.submit()">
+          <option value="">-- All Types --</option>
+          <option value="PURCHASE_IN" {% if selected_type == 'PURCHASE_IN' %}selected{% endif %}>PURCHASE_IN (Stock Add)</option>
+          <option value="SALE_OUT" {% if selected_type == 'SALE_OUT' %}selected{% endif %}>SALE_OUT (Sold)</option>
+          <option value="ADJUSTMENT_OUT" {% if selected_type == 'ADJUSTMENT_OUT' %}selected{% endif %}>ADJUSTMENT_OUT (Write-off)</option>
+          <option value="ASSEMBLY_OUT" {% if selected_type == 'ASSEMBLY_OUT' %}selected{% endif %}>ASSEMBLY_OUT (Components Used)</option>
+        </select>
+      </div>
+
+      <div class="col-12 col-md-3">
+        <label for="searchInput" class="form-label small mb-1 fw-bold">Search Note / Item</label>
+        <input type="text" name="q" id="searchInput" class="form-control form-control-sm" placeholder="Search item or note..." value="{{ search_query }}">
+      </div>
+
+      <div class="col-12 col-md-2 d-flex align-items-end gap-2" style="margin-top: auto;">
+        <button type="submit" class="btn btn-sm btn-primary w-100">Filter</button>
+        {% if selected_category or selected_type or search_query %}
+          <a href="{% url 'inventory:stock-ledger' %}" class="btn btn-sm btn-outline-secondary">Reset</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <!-- Clean Highly Readable Stock Movement Table -->
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table table-hover table-sm align-middle mb-0" style="font-size: 0.86rem;">
+        <thead class="table-light">
+          <tr>
+            <th>Date & Time</th>
+            <th>Product Name</th>
+            <th>Category</th>
+            <th class="text-center">Movement Type</th>
+            <th class="text-center">Stock Change (Qty)</th>
+            <th>Reference / Notes</th>
+            <th>Logged By</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in object_list %}
+            <tr>
+              <td class="text-nowrap text-secondary">{{ m.created_at|date:"M d, Y h:i A" }}</td>
+              <td class="fw-bold">
+                <a href="{% url 'catalog:product-detail' m.product.pk %}" class="text-white text-decoration-none">
+                  {{ m.product.name }}
+                </a>
+              </td>
+              <td><span class="badge bg-secondary-subtle text-body border">{{ m.product.category.name|default:"Uncategorized" }}</span></td>
+              <td class="text-center">
+                {% if m.signed_quantity > 0 %}
+                  <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">{{ m.get_movement_type_display }}</span>
+                {% elif m.movement_type == 'SALE_OUT' %}
+                  <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1">Sale Out</span>
+                {% else %}
+                  <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">{{ m.get_movement_type_display }}</span>
+                {% endif %}
+              </td>
+              <td class="text-center fw-bold fs-6">
+                {% if m.signed_quantity > 0 %}
+                  <span class="text-success">+{{ m.quantity|floatformat:0 }} pcs (IN)</span>
+                {% else %}
+                  <span class="text-danger">-{{ m.quantity|floatformat:0 }} pcs (OUT)</span>
+                {% endif %}
+              </td>
+              <td class="small text-secondary">{{ m.reference_note|default:"—" }}</td>
+              <td class="small text-secondary text-nowrap">{{ m.created_by.get_full_name|default:m.created_by.username|default:"System" }}</td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="7" class="text-center py-4 text-secondary">
+                No stock movements found matching your filters.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if is_paginated %}
+      <div class="card-footer d-flex justify-content-between align-middle py-2">
+        <span class="small text-secondary">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        <div>
+          {% if page_obj.has_previous %}
+            <a class="btn btn-xs btn-outline-secondary" href="?page={{ page_obj.previous_page_number }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_type %}&movement_type={{ selected_type }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}">Previous</a>
+          {% endif %}
+          {% if page_obj.has_next %}
+            <a class="btn btn-xs btn-outline-secondary ms-1" href="?page={{ page_obj.next_page_number }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_type %}&movement_type={{ selected_type }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}">Next</a>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

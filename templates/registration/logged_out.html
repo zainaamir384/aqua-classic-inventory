@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load static %}
+{% block page_title %}Signed Out{% endblock %}
+{% block title %}Signed Out{% endblock %}
+
+{% block auth_content %}
+<div class="row justify-content-center align-items-center auth-page w-100" style="min-height: calc(100vh - 180px);">
+  <div class="col-12 col-sm-10 col-md-8 col-lg-5 col-xxl-4">
+    <div class="card auth-card shadow-lg p-4 text-center">
+      <div class="card-body">
+        <img src="{% static 'brand/aqua-classic-badge.svg' %}" alt="Aqua Classic" style="width:68px;height:68px;">
+        <h2 class="h4 mt-3 mb-2 text-white fw-bold">Signed Out</h2>
+        <p class="text-secondary small mb-4" style="color: #94a3b8 !important;">You have been safely signed out of Aqua Classic Inventory System.</p>
+        <a href="{% url 'login' %}" class="btn btn-primary w-100 py-2 fw-semibold">Sign In Again</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center auth-page w-100" style="min-height: calc(100vh - 180px);">
+  <div class="col-12 col-sm-10 col-md-8 col-lg-5 col-xxl-4">
+    <div class="card auth-card shadow-lg p-4 text-center">
+      <div class="card-body">
+        <img src="{% static 'brand/aqua-classic-badge.svg' %}" alt="Aqua Classic" style="width:68px;height:68px;">
+        <h2 class="h4 mt-3 mb-2 text-white fw-bold">Signed Out</h2>
+        <p class="text-secondary small mb-4" style="color: #94a3b8 !important;">You have been safely signed out of Aqua Classic Inventory System.</p>
+        <a href="{% url 'login' %}" class="btn btn-primary w-100 py-2 fw-semibold">Sign In Again</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

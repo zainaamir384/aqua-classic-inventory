@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block page_title %}Users{% endblock %}
+{% block title %}Staff{% endblock %}
+{% block content %}
+<section class="page-panel">
+  <div class="section-head">
+    <div>
+      <h2 class="h4 mb-1">Users</h2>
+      <p class="text-secondary mb-0">Owner-managed staff accounts and access controls</p>
+    </div>
+    <a class="btn btn-primary" href="{% url 'accounts:staff-add' %}">Add Staff</a>
+  </div>
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead><tr><th>Username</th><th>Name</th><th>Email</th><th>Role</th><th>Active</th><th>Actions</th></tr></thead>
+        <tbody>
+          {% for staff in staff_list %}
+            <tr>
+              <td>{{ staff.username }}</td>
+              <td>{{ staff.get_full_name }}</td>
+              <td>{{ staff.email }}</td>
+              <td>{{ staff.role }}</td>
+              <td>{{ staff.is_active }}</td>
+              <td class="text-nowrap">
+                <a class="btn btn-sm btn-outline-primary" href="{% url 'accounts:staff-edit' staff.pk %}">Edit</a>
+                <a class="btn btn-sm btn-outline-secondary" href="{% url 'accounts:staff-reset-password' staff.pk %}">Reset Password</a>
+                <a class="btn btn-sm btn-outline-danger" href="{% url 'accounts:staff-deactivate' staff.pk %}">Deactivate</a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="6" class="empty-state">No staff members found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,340 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% block page_title %}{{ page_title }}{% endblock %}
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<section class="page-shell">
+  <div class="row justify-content-center">
+    <div class="col-12 col-lg-10 col-xl-9">
+      <div class="card shadow-lg border-0">
+        <div class="card-body p-4">
+          <!-- Form Header -->
+          <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary-subtle">
+            <div>
+              <h1 class="h4 text-white mb-1">🛒 {{ page_title }}</h1>
+              <p class="text-secondary small mb-0">Record single or multi-item customer sales transactions</p>
+            </div>
+            <a href="{% url 'sales:sale-list' %}" class="btn btn-xs btn-outline-secondary">← Back to Sales</a>
+          </div>
+
+          <form method="post" id="sale-form">
+            {% csrf_token %}
+
+            <!-- Customer Selection Card -->
+            <div class="card bg-dark bg-opacity-50 p-3 mb-4 border border-secondary-subtle rounded-3">
+              <div class="row align-items-center">
+                <div class="col-12 col-md-6">
+                  {{ form.customer_name|as_crispy_field }}
+                </div>
+                <div class="col-12 col-md-6 text-md-end mt-2 mt-md-0">
+                  <span class="text-secondary small d-block">ORDER DATE</span>
+                  <strong class="text-white">{% now "F d, Y" %}</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- Items Section -->
+            <div class="mb-4">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h6 text-white mb-0 d-flex align-items-center gap-2">
+                  <span>📦 Sale Items</span>
+                  <span class="badge bg-primary-subtle text-primary border border-primary-subtle" id="item-count-badge">1 Item</span>
+                </h2>
+              </div>
+
+              {{ formset.management_form }}
+
+              <div id="item-rows-container" class="d-flex flex-column gap-3">
+                {% for item_form in formset %}
+                  <div class="item-row card bg-dark bg-opacity-25 p-3 border border-secondary-subtle rounded-3" data-row-index="{{ forloop.counter0 }}">
+                    {{ item_form.id }}
+                    
+                    <!-- Line 1: Category Filter & Product Search -->
+                    <div class="row g-2 mb-2">
+                      <div class="col-12 col-md-4">
+                        <label class="form-label small text-secondary fw-semibold mb-1">1. Category Filter</label>
+                        <select class="form-select form-select-sm category-filter">
+                          <option value="">— All Categories —</option>
+                          {% for cat in categories %}
+                            <option value="{{ cat.pk }}">{{ cat.name }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+
+                      <div class="col-12 col-md-8">
+                        <label class="form-label small text-white fw-semibold mb-1">2. Select Product*</label>
+                        {{ item_form.product }}
+                        {% if item_form.product.errors %}
+                          <div class="text-danger small mt-1">{{ item_form.product.errors.0 }}</div>
+                        {% endif %}
+                      </div>
+                    </div>
+
+                    <!-- Line 2: Quantity, Price, Subtotal & Remove Button -->
+                    <div class="row g-3 align-items-end pt-1">
+                      <div class="col-4 col-md-3">
+                        <label class="form-label small text-white fw-semibold mb-1">Qty*</label>
+                        <input type="number" name="{{ item_form.quantity.html_name }}" id="{{ item_form.quantity.auto_id }}" value="{{ item_form.quantity.value|default:'1' }}" class="form-control form-control-sm qty-input" min="1" step="1" placeholder="Qty">
+                        {% if item_form.quantity.errors %}
+                          <div class="text-danger small mt-1">{{ item_form.quantity.errors.0 }}</div>
+                        {% endif %}
+                      </div>
+
+                      <div class="col-5 col-md-5">
+                        <label class="form-label small text-white fw-semibold mb-1">Price per Unit (PKR)*</label>
+                        <input type="number" name="{{ item_form.sale_price.html_name }}" id="{{ item_form.sale_price.auto_id }}" value="{{ item_form.sale_price.value|default:'' }}" class="form-control form-control-sm price-input" min="0" step="0.01" placeholder="Price">
+                        {% if item_form.sale_price.errors %}
+                          <div class="text-danger small mt-1">{{ item_form.sale_price.errors.0 }}</div>
+                        {% endif %}
+                      </div>
+
+                      <div class="col-3 col-md-4 text-end">
+                        {% if item_form.instance.pk %}
+                          <div class="d-none">{{ item_form.DELETE }}</div>
+                        {% endif %}
+                        <button type="button" class="btn btn-sm btn-outline-danger remove-row-btn fw-semibold px-2.5 py-1" title="Remove Item">
+                          ✖ Remove
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Row Subtotal Display -->
+                    <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top border-secondary-subtle small">
+                      <span class="text-secondary">Item Line Subtotal:</span>
+                      <strong class="text-emerald row-subtotal">PKR 0.00</strong>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+
+              <!-- Add Another Item Button -->
+              <div class="mt-3">
+                <button type="button" id="add-item-btn" class="btn btn-sm btn-outline-primary px-3 py-1.5 fw-semibold shadow-sm">
+                  + Add Another Item
+                </button>
+              </div>
+            </div>
+
+            <!-- Grand Total Bar -->
+            <div class="card bg-primary bg-opacity-10 border border-primary border-opacity-25 p-3 mb-4 rounded-3">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <span class="text-secondary small d-block">ESTIMATED ORDER TOTAL</span>
+                  <span class="text-white small">Auto-calculated sum of all items above</span>
+                </div>
+                <div class="text-end">
+                  <h3 class="h4 text-primary fw-bold mb-0" id="grand-total-display">PKR 0.00</h3>
+                </div>
+              </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="d-grid">
+              <button class="btn btn-primary btn-lg fw-bold shadow-sm" type="submit">
+                ✓ Save Order & Auto-Deduct Stock
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Empty Form Template for Dynamic Clones -->
+<template id="empty-form-template">
+  <div class="item-row card bg-dark bg-opacity-25 p-3 border border-secondary-subtle rounded-3" data-row-index="__prefix__">
+    <!-- Line 1: Category Filter & Product Search -->
+    <div class="row g-2 mb-2">
+      <div class="col-12 col-md-4">
+        <label class="form-label small text-secondary fw-semibold mb-1">1. Category Filter</label>
+        <select class="form-select form-select-sm category-filter">
+          <option value="">— All Categories —</option>
+          {% for cat in categories %}
+            <option value="{{ cat.pk }}">{{ cat.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-12 col-md-8">
+        <label class="form-label small text-white fw-semibold mb-1">2. Select Product*</label>
+        <select name="items-__prefix__-product" id="id_items-__prefix__-product" class="form-select form-select-sm product-select">
+          <option value="">---------</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Line 2: Quantity, Price, & Remove Button -->
+    <div class="row g-3 align-items-end pt-1">
+      <div class="col-4 col-md-3">
+        <label class="form-label small text-white fw-semibold mb-1">Qty*</label>
+        <input type="number" name="items-__prefix__-quantity" id="id_items-__prefix__-quantity" class="form-control form-control-sm qty-input" min="1" step="1" placeholder="Qty" value="1">
+      </div>
+
+      <div class="col-5 col-md-5">
+        <label class="form-label small text-white fw-semibold mb-1">Price per Unit (PKR)*</label>
+        <input type="number" name="items-__prefix__-sale_price" id="id_items-__prefix__-sale_price" class="form-control form-control-sm price-input" min="0" step="0.01" placeholder="Price">
+      </div>
+
+      <div class="col-3 col-md-4 text-end">
+        <button type="button" class="btn btn-sm btn-outline-danger remove-row-btn fw-semibold px-2.5 py-1" title="Remove Item">
+          ✖ Remove
+        </button>
+      </div>
+    </div>
+
+    <!-- Row Subtotal -->
+    <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top border-secondary-subtle small">
+      <span class="text-secondary">Item Line Subtotal:</span>
+      <strong class="text-emerald row-subtotal">PKR 0.00</strong>
+    </div>
+  </div>
+</template>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const allProducts = {{ products_json|safe }};
+    const container = document.getElementById("item-rows-container");
+    const addItemBtn = document.getElementById("add-item-btn");
+    const totalFormsInput = document.getElementById("id_items-TOTAL_FORMS");
+    const grandTotalDisplay = document.getElementById("grand-total-display");
+    const itemCountBadge = document.getElementById("item-count-badge");
+    const emptyTemplate = document.getElementById("empty-form-template");
+
+    function updateCalculations() {
+      let grandTotal = 0;
+      let visibleCount = 0;
+
+      const rows = container.querySelectorAll(".item-row");
+      rows.forEach(row => {
+        if (row.style.display === "none") return;
+        visibleCount++;
+
+        const qtyInput = row.querySelector(".qty-input, input[name$='-quantity']");
+        const priceInput = row.querySelector(".price-input, input[name$='-sale_price']");
+        const subtotalEl = row.querySelector(".row-subtotal");
+
+        const qty = parseFloat(qtyInput ? qtyInput.value : 0) || 0;
+        const price = parseFloat(priceInput ? priceInput.value : 0) || 0;
+        const subtotal = qty * price;
+
+        grandTotal += subtotal;
+        if (subtotalEl) {
+          subtotalEl.textContent = "PKR " + subtotal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+      });
+
+      if (grandTotalDisplay) {
+        grandTotalDisplay.textContent = "PKR " + grandTotal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+
+      if (itemCountBadge) {
+        itemCountBadge.textContent = visibleCount + (visibleCount === 1 ? " Item" : " Items");
+      }
+    }
+
+    function initRow(row) {
+      const catFilter = row.querySelector(".category-filter");
+      const productSelect = row.querySelector("select[name$='-product']");
+      const qtyInput = row.querySelector("input[name$='-quantity']");
+      const priceInput = row.querySelector("input[name$='-sale_price']");
+      const removeBtn = row.querySelector(".remove-row-btn");
+
+      if (!productSelect) return;
+
+      // Populate product dropdown options based on category filter
+      function renderProducts(catId) {
+        if (productSelect.tomselect) {
+          productSelect.tomselect.destroy();
+        }
+
+        const currentVal = productSelect.value;
+        productSelect.innerHTML = '<option value="">---------</option>';
+
+        const filtered = (catId && String(catId).trim() !== "")
+          ? allProducts.filter(p => String(p.category_id) === String(catId))
+          : allProducts;
+
+        filtered.forEach(p => {
+          const opt = document.createElement("option");
+          opt.value = p.id;
+          opt.textContent = p.name;
+          if (String(p.id) === String(currentVal)) {
+            opt.selected = true;
+          }
+          productSelect.appendChild(opt);
+        });
+
+        try {
+          new TomSelect(productSelect, {
+            create: false,
+            maxOptions: 1000,
+            placeholder: 'Search product...',
+            onChange: function(val) {
+              // Auto-fill price if available/empty
+              const prod = allProducts.find(p => String(p.id) === String(val));
+              if (prod && priceInput && (!priceInput.value || parseFloat(priceInput.value) === 0)) {
+                if (prod.price) priceInput.value = prod.price;
+              }
+              updateCalculations();
+            }
+          });
+        } catch(e) {}
+      }
+
+      if (catFilter) {
+        catFilter.addEventListener("change", function() {
+          renderProducts(catFilter.value);
+        });
+      }
+
+      renderProducts(catFilter ? catFilter.value : "");
+
+      if (qtyInput) qtyInput.addEventListener("input", updateCalculations);
+      if (priceInput) priceInput.addEventListener("input", updateCalculations);
+
+      if (removeBtn) {
+        removeBtn.addEventListener("click", function() {
+          const rows = container.querySelectorAll(".item-row:not([style*='display: none'])");
+          if (rows.length <= 1) {
+            alert("Orders must contain at least 1 item row.");
+            return;
+          }
+
+          const deleteInput = row.querySelector("input[name$='-DELETE']");
+          if (deleteInput) {
+            deleteInput.checked = true;
+            row.style.display = "none";
+          } else {
+            row.remove();
+          }
+          updateCalculations();
+        });
+      }
+    }
+
+    // Initialize existing rows
+    container.querySelectorAll(".item-row").forEach(initRow);
+    updateCalculations();
+
+    // Add another item row dynamically
+    if (addItemBtn && emptyTemplate && totalFormsInput) {
+      addItemBtn.addEventListener("click", function() {
+        const formIdx = parseInt(totalFormsInput.value, 10);
+        let templateHtml = emptyTemplate.innerHTML.replace(/__prefix__/g, formIdx);
+
+        const tempDiv = document.createElement("div");
+        tempDiv.innerHTML = templateHtml;
+        const newRow = tempDiv.firstElementChild;
+
+        container.appendChild(newRow);
+        totalFormsInput.value = formIdx + 1;
+
+        initRow(newRow);
+        updateCalculations();
+      });
+    }
+  });
+</script>
+{% endblock %}

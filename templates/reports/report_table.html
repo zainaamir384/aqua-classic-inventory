@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block page_title %}{{ page_title }}{% endblock %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block content %}
+<section class="page-panel">
+  <div class="section-head">
+    <div>
+      <h2 class="h4 mb-1">{{ page_title }}</h2>
+      <p class="text-secondary mb-0">Export this report or inspect the live table below</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a class="btn btn-outline-primary" href="?format=xlsx">Excel</a>
+      <a class="btn btn-outline-primary" href="?format=pdf">PDF</a>
+    </div>
+  </div>
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead><tr>{% for column in columns %}<th>{{ column.label }}</th>{% endfor %}</tr></thead>
+        <tbody>
+          {% for row in rows %}
+            <tr>{% for value in row.values %}<td>{{ value }}</td>{% endfor %}</tr>
+          {% empty %}
+            <tr><td colspan="{{ columns|length }}" class="empty-state">No records found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,329 @@
+{% extends "base.html" %}
+{% block page_title %}Dashboard{% endblock %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<section class="page-shell page-enter">
+
+  <!-- Top 4 KPI Cards Grid (StockFlow Pro Style — Staggered Fade-Up) -->
+  <div class="row g-3 mb-4 stagger-children">
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="kpi-card h-100">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <span class="kpi-card__label">Today's Revenue</span>
+          <div class="kpi-icon-pill">
+            <svg style="width:16px;height:16px;stroke:var(--accent-cyan);" viewBox="0 0 24 24" fill="none" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V6m0 12v-2m0 0c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+        </div>
+        <div class="kpi-value mb-1">PKR {{ revenue_today|default:0|floatformat:0 }}</div>
+        <div class="kpi-card__trend {% if revenue_is_down %}kpi-trend--down{% else %}kpi-trend--up{% endif %}">
+          {% if revenue_is_down %}
+            <svg style="width:12px;height:12px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/></svg>
+          {% else %}
+            <svg style="width:12px;height:12px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+          {% endif %}
+          <span>{{ revenue_trend_str }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="kpi-card h-100">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <span class="kpi-card__label">Orders Today</span>
+          <div class="kpi-icon-pill">
+            <svg style="width:16px;height:16px;stroke:var(--accent-blue);" viewBox="0 0 24 24" fill="none" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>
+          </div>
+        </div>
+        <div class="kpi-value mb-1">{{ orders_today_count }} Orders</div>
+        <div class="kpi-card__trend {% if orders_is_down %}kpi-trend--down{% else %}kpi-trend--up{% endif %}">
+          {% if orders_is_down %}
+            <svg style="width:12px;height:12px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/></svg>
+          {% else %}
+            <svg style="width:12px;height:12px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+          {% endif %}
+          <span>{{ orders_trend_str }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="kpi-card h-100">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <span class="kpi-card__label">Total SKUs</span>
+          <div class="kpi-icon-pill">
+            <svg style="width:16px;height:16px;stroke:var(--accent-purple);" viewBox="0 0 24 24" fill="none" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+          </div>
+        </div>
+        <div class="kpi-value mb-1">{{ total_skus }}</div>
+        <div class="kpi-card__trend kpi-trend--up">
+          <svg style="width:12px;height:12px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+          <span>{{ total_skus }} active catalog items</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="kpi-card h-100">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <span class="kpi-card__label">Net Profit Margin</span>
+          <div class="kpi-icon-pill">
+            <svg style="width:16px;height:16px;stroke:var(--accent-emerald);" viewBox="0 0 24 24" fill="none" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 012-2h2a2 2 0 012 2v6a2 2 0 01-2 2h-2a2 2 0 01-2-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          </div>
+        </div>
+        <div class="kpi-value mb-1 text-emerald">PKR {{ total_profit|default:0|floatformat:0 }}</div>
+        <div class="kpi-card__trend kpi-trend--up">
+          <svg style="width:12px;height:12px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+          <span>{{ profit_margin_str }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Performance Charts Row (Fade-Up on Scroll) -->
+  <div class="row g-4 mb-4 fade-up">
+    <!-- Daily Sales Performance Bar/Line Chart -->
+    <div class="col-12 col-lg-7">
+      <div class="card h-100">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <div>
+            <h3 class="h6 mb-0 fw-bold">Daily Sales Performance</h3>
+            <p class="text-secondary small mb-0">Sales revenue vs net profit for the past 7 days</p>
+          </div>
+          <span class="badge bg-primary-subtle text-primary border">Past 7 Days</span>
+        </div>
+        <div class="card-body">
+          <div style="height: 260px; position: relative;">
+            <canvas id="salesProfitChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inventory Distribution Pie/Doughnut Chart -->
+    <div class="col-12 col-lg-5">
+      <div class="card h-100">
+        <div class="card-header">
+          <h3 class="h6 mb-0 fw-bold">Inventory Distribution</h3>
+          <p class="text-secondary small mb-0">Product distribution across categories</p>
+        </div>
+        <div class="card-body d-flex align-items-center justify-content-center">
+          <div style="height: 250px; width: 100%; position: relative;">
+            <canvas id="categoryDonutChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Orders & Low Stock Alerts Row (Fade-Up on Scroll) -->
+  <div class="row g-4 fade-up">
+    <!-- Recent Orders Card -->
+    <div class="col-12 col-lg-6">
+      <div class="card h-100">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <div>
+            <h3 class="h6 mb-0 fw-bold">Recent Orders</h3>
+            <p class="text-secondary small mb-0">Latest sales orders across all channels</p>
+          </div>
+          <a href="{% url 'sales:sale-list' %}" class="btn btn-xs btn-outline-secondary text-decoration-none">View All</a>
+        </div>
+        <div class="card-body p-0">
+          <div class="list-group list-group-flush bg-transparent">
+            {% for sale in recent_sales %}
+              <div class="list-group-item bg-transparent border-bottom-muted p-3 d-flex align-items-center justify-content-between">
+                <div>
+                  <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="badge-code">ORD-00{{ sale.pk }}</span>
+                    <span class="badge bg-secondary-subtle border py-0 px-2" style="font-size:0.7rem;">{{ sale.customer_name|default:"Walk-in Customer" }}</span>
+                  </div>
+                  <div class="small text-secondary">
+                    {% for item in sale.items.all %}
+                      {{ item.quantity|floatformat:0 }}x {{ item.product.name }}{% if not forloop.last %}, {% endif %}
+                    {% empty %}
+                      Sales transaction
+                    {% endfor %}
+                  </div>
+                </div>
+                <div class="text-end d-flex align-items-center gap-3">
+                  <div>
+                    <div class="fw-bold fs-6 text-white">PKR {{ sale.total_amount|floatformat:2 }}</div>
+                    <span class="badge bg-success-subtle text-success border py-0 px-2">completed</span>
+                  </div>
+                  <a href="{% url 'sales:sale-list' %}" class="btn btn-xs btn-ghost text-secondary" title="View Order Details">
+                    <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/></svg>
+                  </a>
+                </div>
+              </div>
+            {% empty %}
+              <div class="text-center py-4 text-secondary small">No recent orders logged yet.</div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Low Stock Alerts Card -->
+    <div class="col-12 col-lg-6">
+      <div class="card h-100">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <div>
+            <h3 class="h6 mb-0 fw-bold d-flex align-items-center gap-2">
+              <svg style="width:16px;height:16px;stroke:var(--accent-rose);" viewBox="0 0 24 24" fill="none" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              Low Stock Alerts
+            </h3>
+            <p class="text-secondary small mb-0">Items requiring immediate attention</p>
+          </div>
+          <a href="{% url 'reports:report-home' %}" class="btn btn-xs btn-outline-secondary text-decoration-none">View Advisory</a>
+        </div>
+        <div class="card-body p-0">
+          <div class="list-group list-group-flush bg-transparent">
+            {% for item in low_stock_items %}
+              <div class="list-group-item bg-transparent border-bottom-muted p-3 d-flex align-items-center justify-content-between">
+                <div>
+                  <div class="d-flex align-items-center gap-2 mb-1">
+                    <strong class="fs-6 text-white">{{ item.product.name }}</strong>
+                    <span class="badge-code">{{ item.product.sku }}</span>
+                  </div>
+                  <div class="small text-secondary">
+                    Category: {{ item.product.category.name }} • Stock: <strong class="text-warning">{{ item.quantity_on_hand|floatformat:0 }} pcs</strong> / Min: {{ item.product.reorder_level|floatformat:0 }}
+                  </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  {% if item.quantity_on_hand <= 0 %}
+                    <span class="badge bg-danger-subtle text-danger border py-1 px-2">critical</span>
+                  {% else %}
+                    <span class="badge bg-warning-subtle text-warning border py-1 px-2">warning</span>
+                  {% endif %}
+                  <a href="{% url 'catalog:product-list' %}" class="btn btn-xs btn-outline-primary py-1 px-2">Reorder</a>
+                </div>
+              </div>
+            {% empty %}
+              <div class="text-center py-4 text-secondary small">No low stock items. Inventory levels are healthy!</div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<!-- Safely Pass Data to JavaScript without Syntax Linter Red Underlines -->
+{{ chart_labels|json_script:"chart-labels-data" }}
+{{ chart_sales|json_script:"chart-sales-data" }}
+{{ chart_profit|json_script:"chart-profit-data" }}
+{{ cat_labels|json_script:"cat-labels-data" }}
+{{ cat_stock|json_script:"cat-stock-data" }}
+
+<!-- Chart.js Script for Daily Sales Performance and Inventory Distribution Pie/Doughnut Chart -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Detect dark mode
+    const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+    const gridColor = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)';
+    const textColor = isDark ? '#94a3b8' : '#475569';
+
+    // Parse json_script safely
+    const chartLabels = JSON.parse(document.getElementById('chart-labels-data').textContent || '[]');
+    const chartSales = JSON.parse(document.getElementById('chart-sales-data').textContent || '[]');
+    const chartProfit = JSON.parse(document.getElementById('chart-profit-data').textContent || '[]');
+    const catLabels = JSON.parse(document.getElementById('cat-labels-data').textContent || '[]');
+    const catStock = JSON.parse(document.getElementById('cat-stock-data').textContent || '[]');
+
+    // 1. Daily Sales & Profit Performance Bar Chart
+    const ctxSalesCanvas = document.getElementById('salesProfitChart');
+    if (ctxSalesCanvas) {
+      const ctxSales = ctxSalesCanvas.getContext('2d');
+      new Chart(ctxSales, {
+        type: 'bar',
+        data: {
+          labels: chartLabels,
+          datasets: [
+            {
+              label: 'Sales Revenue (PKR)',
+              data: chartSales,
+              backgroundColor: isDark ? 'rgba(57, 118, 246, 0.85)' : 'rgba(57, 118, 246, 0.85)',
+              borderColor: '#3976f6',
+              borderWidth: 1,
+              borderRadius: 6,
+            },
+            {
+              label: 'Net Profit (PKR)',
+              data: chartProfit,
+              backgroundColor: isDark ? 'rgba(16, 185, 129, 0.85)' : 'rgba(16, 185, 129, 0.85)',
+              borderColor: '#10b981',
+              borderWidth: 1,
+              borderRadius: 6,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'top', labels: { color: textColor, font: { family: 'Inter', size: 11, weight: '600' } } },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) { return ctx.dataset.label + ': PKR ' + ctx.parsed.y.toLocaleString(); }
+              }
+            }
+          },
+          scales: {
+            x: { ticks: { color: textColor }, grid: { color: gridColor } },
+            y: {
+              beginAtZero: true,
+              ticks: { color: textColor, callback: function(val) { return 'PKR ' + val; } },
+              grid: { color: gridColor }
+            }
+          }
+        }
+      });
+    }
+
+    // 2. Inventory Distribution Pie/Doughnut Chart (Matching Reference Screenshot 2)
+    const ctxDonutCanvas = document.getElementById('categoryDonutChart');
+    if (ctxDonutCanvas) {
+      const ctxDonut = ctxDonutCanvas.getContext('2d');
+      new Chart(ctxDonut, {
+        type: 'doughnut',
+        data: {
+          labels: catLabels,
+          datasets: [{
+            data: catStock,
+            backgroundColor: [
+              '#3976f6',
+              '#10b981',
+              '#f59e0b',
+              '#f43f5e',
+              '#8b5cf6',
+              '#6366f1',
+              '#06b6d4',
+              '#ec4899'
+            ],
+            borderWidth: 2,
+            borderColor: isDark ? '#0d1527' : '#ffffff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'right', labels: { color: textColor, font: { family: 'Inter', size: 11, weight: '600' } } },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) {
+                  const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                  const pct = total > 0 ? ((ctx.parsed / total) * 100).toFixed(1) : 0;
+                  return ctx.label + ': ' + ctx.parsed + ' pcs (' + pct + '%)';
+                }
+              }
+            }
+          },
+          cutout: '65%'
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}

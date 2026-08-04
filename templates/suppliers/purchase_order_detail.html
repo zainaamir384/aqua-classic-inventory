@@ -1,0 +1,31 @@
+{% extends "generic/detail.html" %}
+{% block content %}
+<section class="page-panel">
+  <div class="section-head">
+    <div>
+      <h2 class="h4 mb-1">{{ page_title }}</h2>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <form method="post" action="{{ receive_url }}" class="m-0">{% csrf_token %}<button class="btn btn-success" type="submit">Receive</button></form>
+      <a class="btn btn-outline-primary" href="{{ edit_url }}">Edit</a>
+      <a class="btn btn-outline-danger" href="{{ delete_url }}">Delete</a>
+    </div>
+  </div>
+  <div class="card mb-0">
+    <div class="card-body">
+      <dl class="row mb-0 g-3">{% for field in details %}<dt class="col-sm-4 col-md-3 text-secondary">{{ field.label }}</dt><dd class="col-sm-8 col-md-9 mb-0">{{ field.value }}</dd>{% endfor %}</dl>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <h2 class="h5 mb-3">Line Items</h2>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead><tr><th>Product</th><th>Ordered</th><th>Received</th><th>Unit Cost</th></tr></thead>
+          <tbody>{% for item in line_items %}<tr><td>{{ item.product }}</td><td class="numeric">{{ item.ordered_qty }}</td><td class="numeric">{{ item.received_qty }}</td><td>{{ item.unit_cost }}</td></tr>{% empty %}<tr><td colspan="4" class="empty-state">No line items.</td></tr>{% endfor %}</tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

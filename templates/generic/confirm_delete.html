@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block page_title %}{{ page_title }}{% endblock %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-8 col-xxl-6">
+    <div class="card">
+      <div class="card-body">
+        <div class="section-head mb-3">
+          <div>
+            <h2 class="h4 mb-1">{{ page_title }}</h2>
+          </div>
+        </div>
+        <p class="text-secondary">Are you sure you want to delete <strong>{{ object }}</strong>?</p>
+        <form method="post" class="d-flex flex-wrap gap-2">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ request.GET.next }}">
+          <button class="btn btn-danger" type="submit">Confirm Delete</button>
+          <a class="btn btn-outline-secondary" href="{{ request.GET.next|default:cancel_url }}">Cancel</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

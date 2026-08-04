@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+{% block page_title %}Sales & Revenue Hub{% endblock %}
+{% block title %}Sales & Revenue Hub{% endblock %}
+
+{% block content %}
+<section class="page-shell">
+  <!-- Page Header Bar with + Record New Sale Button -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+      <h1 class="h3 text-white mb-1">Sales & Revenue Hub</h1>
+      <p class="text-secondary small mb-0">Record new sales transactions, view item categories, prices, and net profit analytics</p>
+    </div>
+    <div>
+      <a href="{% url 'sales:sale-add' %}" class="btn btn-primary btn-sm px-3 shadow-sm">
+        + Record New Sale
+      </a>
+    </div>
+  </div>
+
+  <!-- All-Time Sales & Profit Summary Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-sm-3">
+      <div class="kpi-card p-3">
+        <div class="kpi-card__label mb-1">ALL-TIME ORDERS LOGGED</div>
+        <div class="kpi-value text-white" style="font-size: 1.3rem; white-space: nowrap;">{{ sales_list|length }} Orders</div>
+      </div>
+    </div>
+    <div class="col-12 col-sm-3">
+      <div class="kpi-card p-3">
+        <div class="kpi-card__label mb-1">ALL-TIME SALES REVENUE</div>
+        <div class="kpi-value text-cyan" style="font-size: 1.25rem; white-space: nowrap;">PKR {{ total_revenue|default:0|floatformat:2 }}</div>
+      </div>
+    </div>
+    <div class="col-12 col-sm-3">
+      <div class="kpi-card p-3">
+        <div class="kpi-card__label mb-1">ESTIMATED NET PROFIT</div>
+        <div class="kpi-value text-emerald" style="font-size: 1.25rem; white-space: nowrap;">
+          PKR {{ total_profit|default:0|floatformat:2 }}
+          <div class="fs-6 text-emerald fw-semibold mt-1">({{ profit_margin|floatformat:1 }}% Margin)</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-sm-3">
+      <div class="kpi-card p-3">
+        <div class="kpi-card__label mb-1">ALL-TIME ITEMS SOLD</div>
+        <div class="kpi-value text-warning" style="font-size: 1.3rem; white-space: nowrap;">{{ total_items_sold|default:0|floatformat:0 }} pcs</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TODAY'S ACTIVE SALES TABLE -->
+  <div class="card mb-4 border-primary-subtle">
+    <div class="card-body p-4">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div>
+          <h2 class="h5 mb-0 text-white d-flex align-items-center gap-2">
+            <span class="spinner-grow spinner-grow-sm text-success" role="status"></span>
+            Today's Active Sales
+            <small class="text-secondary fs-6">({{ today_date|date:"F d, Y" }})</small>
+          </h2>
+        </div>
+        <div class="d-flex gap-2 align-items-center flex-wrap">
+          <span class="badge bg-success-subtle text-success border px-2 py-1">
+            {{ today_orders_count }} Product Orders
+          </span>
+          <span class="badge bg-info-subtle text-info border px-2 py-1">
+            Product Sales: PKR {{ today_sales_rev|floatformat:2 }}
+          </span>
+          {% if today_srv_rev > 0 %}
+            <span class="badge text-white border px-2 py-1" style="background: rgba(168, 85, 247, 0.2); border-color: rgba(168, 85, 247, 0.4) !important;">
+              Service Visits: PKR {{ today_srv_rev|floatformat:2 }}
+            </span>
+          {% endif %}
+          <span class="badge bg-emerald-subtle text-emerald border px-2 py-1" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border-color: rgba(16, 185, 129, 0.3) !important;">
+            Total Revenue: PKR {{ today_revenue|floatformat:2 }}
+          </span>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" style="font-size: 0.86rem;">
+          <thead class="table-light">
+            <tr>
+              <th>Order ID</th>
+              <th>Date / Time</th>
+              <th>Sold To</th>
+              <th>Items & Categories Sold</th>
+              <th class="text-center">Total Quantity</th>
+              <th class="text-end">Revenue & Profit</th>
+              <th>Recorded By</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for sale in today_sales %}
+              <tr>
+                <td>
+                  <span class="badge-code">ORD-00{{ sale.pk }}</span>
+                </td>
+                <td class="text-nowrap text-secondary">
+                  {{ sale.created_at|date:"M d, Y"|default:sale.sale_date }}
+                </td>
+                <td>
+                  {% if sale.customer_name == "Salesman" %}
+                    <span class="badge bg-info-subtle text-info border px-2 py-1">Salesman</span>
+                  {% else %}
+                    <span class="badge bg-secondary-subtle border text-body px-2 py-1">Customer</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% for item in sale.items.all %}
+                    <div class="mb-1">
+                      <span class="badge bg-secondary-subtle border text-body py-0 px-1" style="font-size: 0.7rem;">
+                        {{ item.product.category.name|default:"Uncategorized" }}
+                      </span>
+                      <strong class="text-white ms-1">{{ item.product.name }}</strong>
+                      <span class="text-secondary small ms-1">
+                        ({{ item.quantity|floatformat:0 }} pcs @ PKR {{ item.sale_price|floatformat:2 }})
+                      </span>
+                    </div>
+                  {% empty %}
+                    <span class="text-secondary">—</span>
+                  {% endfor %}
+                </td>
+                <td class="text-center fw-bold text-warning">
+                  {{ sale.total_quantity|floatformat:0 }} pcs
+                </td>
+                <td class="text-end text-white">
+                  <div class="fw-bold fs-6">PKR {{ sale.total_amount|floatformat:2 }}</div>
+                  {% if sale.total_profit > 0 %}
+                    <div class="small text-emerald fw-semibold" style="font-size: 0.75rem; color: #10b981;">
+                      +PKR {{ sale.total_profit|floatformat:2 }} ({{ sale.profit_margin_percent|floatformat:0 }}% Profit)
+                    </div>
+                  {% elif sale.total_profit < 0 %}
+                    <div class="small text-danger fw-semibold" style="font-size: 0.75rem;">
+                      -PKR {{ sale.total_profit|floatformat:2 }} (Loss)
+                    </div>
+                  {% else %}
+                    <div class="small text-secondary" style="font-size: 0.75rem;">(Cost Price N/A)</div>
+                  {% endif %}
+                </td>
+                <td class="text-secondary small">
+                  {{ sale.created_by.get_full_name|default:sale.created_by.username }}
+                </td>
+                <td class="text-end text-nowrap">
+                  <a href="{% url 'sales:sale-detail' sale.pk %}" class="btn btn-xs btn-outline-secondary py-0 px-2">View</a>
+                  {% if can_manage %}
+                    <a href="{% url 'sales:sale-edit' sale.pk %}" class="btn btn-xs btn-outline-primary py-0 px-2 ms-1">Edit</a>
+                    <a href="{% url 'sales:sale-delete' sale.pk %}" class="btn btn-xs btn-outline-danger py-0 px-2 ms-1">Delete</a>
+                  {% endif %}
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="8" class="text-center py-4 text-secondary">
+                  No sales logged for today yet. Click <strong class="text-white">+ Record New Sale</strong> above to log a sale!
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAST DAYS SALES HISTORY & DAILY ARCHIVES -->
+  <div class="mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2 class="h5 mb-0 text-white">📁 Past Days Sales Archives & History</h2>
+      <span class="text-secondary small">{{ past_days_grouped|length }} Archived Days</span>
+    </div>
+
+    {% for day in past_days_grouped %}
+      <div class="card mb-3 shadow-sm border-0">
+        <div class="card-header bg-dark p-3 d-flex flex-wrap justify-content-between align-items-center gap-2 cursor-pointer" 
+             data-bs-toggle="collapse" 
+             data-bs-target="#day-collapse-{{ forloop.counter }}" 
+             aria-expanded="false" 
+             style="background: #0d1527 !important; border-bottom: 1px solid rgba(255,255,255,0.08);">
+          <div class="d-flex align-items-center gap-3">
+            <span class="fs-5 text-info">📅</span>
+            <div>
+              <strong class="text-white fs-6">{{ day.date|date:"F d, Y (l)" }}</strong>
+              <div class="text-secondary small">{{ day.orders_count }} Orders | {{ day.total_items }} Items Sold</div>
+            </div>
+          </div>
+          <div class="d-flex align-items-center gap-3">
+            <div class="text-end">
+              <span class="text-secondary small d-block">DAY TOTAL REVENUE</span>
+              <strong class="text-emerald fs-6">PKR {{ day.total_revenue|floatformat:2 }}</strong>
+              <span class="badge bg-emerald-subtle text-emerald border ms-2" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">
+                Profit: PKR {{ day.total_profit|floatformat:2 }}
+              </span>
+            </div>
+            <button class="btn btn-xs btn-outline-secondary">▼ Expand Sales</button>
+          </div>
+        </div>
+
+        <div id="day-collapse-{{ forloop.counter }}" class="collapse">
+          <div class="card-body p-3">
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+                <thead class="table-light">
+                  <tr>
+                    <th>Order ID</th>
+                    <th>Date / Time</th>
+                    <th>Sold To</th>
+                    <th>Items Sold</th>
+                    <th class="text-center">Qty</th>
+                    <th class="text-end">Revenue & Profit</th>
+                    <th>Recorded By</th>
+                    <th class="text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for sale in day.sales %}
+                    <tr>
+                      <td><span class="badge-code">ORD-00{{ sale.pk }}</span></td>
+                      <td class="text-nowrap text-secondary">{{ sale.created_at|date:"M d, Y"|default:sale.sale_date }}</td>
+                      <td>
+                        {% if sale.customer_name == "Salesman" %}
+                          <span class="badge bg-info-subtle text-info border px-2 py-1">Salesman</span>
+                        {% else %}
+                          <span class="badge bg-secondary-subtle border text-body px-2 py-1">Customer</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        {% for item in sale.items.all %}
+                          <div><strong class="text-white">{{ item.product.name }}</strong> ({{ item.quantity|floatformat:0 }} pcs @ PKR {{ item.sale_price|floatformat:2 }})</div>
+                        {% endfor %}
+                      </td>
+                      <td class="text-center fw-bold text-warning">
+                        {{ sale.total_quantity|floatformat:0 }} pcs
+                      </td>
+                      <td class="text-end text-white">
+                        <div class="fw-bold">PKR {{ sale.total_amount|floatformat:2 }}</div>
+                        {% if sale.total_profit > 0 %}
+                          <div class="small text-emerald" style="font-size: 0.75rem; color: #10b981;">+PKR {{ sale.total_profit|floatformat:2 }}</div>
+                        {% endif %}
+                      </td>
+                      <td class="text-secondary small">{{ sale.created_by.get_full_name|default:sale.created_by.username }}</td>
+                      <td class="text-end text-nowrap">
+                        <a href="{% url 'sales:sale-detail' sale.pk %}" class="btn btn-xs btn-outline-secondary py-0 px-2">View</a>
+                        {% if can_manage %}
+                          <a href="{% url 'sales:sale-edit' sale.pk %}" class="btn btn-xs btn-outline-primary py-0 px-2 ms-1">Edit</a>
+                          <a href="{% url 'sales:sale-delete' sale.pk %}" class="btn btn-xs btn-outline-danger py-0 px-2 ms-1">Delete</a>
+                        {% endif %}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="card p-4 text-center text-secondary border-0">
+        No archived sales records found.
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

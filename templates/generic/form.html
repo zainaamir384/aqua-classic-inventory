@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% block page_title %}{{ page_title }}{% endblock %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-xxl-10">
+    <div class="card">
+      <div class="card-body">
+        <div class="section-head mb-4">
+          <div>
+            <h2 class="h4 mb-1">{{ page_title }}</h2>
+            {% if page_subtitle %}<p class="text-secondary mb-0">{{ page_subtitle }}</p>{% endif %}
+          </div>
+        </div>
+        <form method="post" class="form-shell">
+          {% csrf_token %}
+          {{ form|crispy }}
+          <div class="d-flex flex-wrap gap-2 mt-4">
+            <button class="btn btn-primary" type="submit">Save</button>
+            <a class="btn btn-outline-secondary" href="{{ cancel_url }}">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const categorySelect = document.querySelector('select[name="category"]');
+    const newCategoryInput = document.querySelector('input[name="new_category_name"]');
+    const stageCountGroup = document.querySelector('#div_id_stage_count');
+
+    function updateStageVisibility() {
+      if (!stageCountGroup) return;
+      let selectedText = "";
+      if (categorySelect && categorySelect.selectedIndex >= 0) {
+        selectedText = categorySelect.options[categorySelect.selectedIndex].text.toLowerCase();
+      }
+      let newText = newCategoryInput ? newCategoryInput.value.toLowerCase() : "";
+
+      if (selectedText.includes("assembled") || selectedText.includes("system") || newText.includes("assembled") || newText.includes("system")) {
+        stageCountGroup.style.display = "block";
+      } else {
+        stageCountGroup.style.display = "none";
+      }
+    }
+
+    if (categorySelect) categorySelect.addEventListener('change', updateStageVisibility);
+    if (newCategoryInput) newCategoryInput.addEventListener('input', updateStageVisibility);
+    updateStageVisibility();
+  });
+</script>
+{% endblock %}
