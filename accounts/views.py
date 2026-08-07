@@ -11,6 +11,18 @@ from .mixins import OwnerRequiredMixin
 from .models import User
 
 
+def demo_quick_login(request):
+    from django.contrib.auth import login
+    from django.shortcuts import redirect
+
+    demo_user = User.objects.filter(is_superuser=True).first() or User.objects.first()
+    if demo_user:
+        login(request, demo_user, backend="django.contrib.auth.backends.ModelBackend")
+        messages.success(request, f"Welcome to Aqua Classic Demo! Logged in as '{demo_user.get_full_name() or demo_user.username}'.")
+        return redirect("dashboard:home")
+    return redirect("login")
+
+
 class StaffListView(OwnerRequiredMixin, ListView):
     model = User
     template_name = "accounts/staff_list.html"

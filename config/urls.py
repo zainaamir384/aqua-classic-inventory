@@ -1,9 +1,7 @@
-"""
-URL configuration for config project.
-"""
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.urls import include, path, reverse_lazy
+from accounts.views import demo_quick_login
 
 urlpatterns = [
     path("", include("dashboard.urls")),
@@ -15,7 +13,8 @@ urlpatterns = [
     path("services/", include("services.urls")),
     path("reports/", include("reports.urls")),
     
-    # Auth & Password Reset Routes (Root Level for standard Django auth resolution)
+    # Auth & Demo Login Routes
+    path("demo-login/", demo_quick_login, name="demo_quick_login"),
     path("login/", auth_views.LoginView.as_view(template_name="registration/login.html"), name="login"),
     path("logout/", auth_views.LogoutView.as_view(next_page="login", template_name="registration/logged_out.html"), name="logout"),
     path(
@@ -24,7 +23,7 @@ urlpatterns = [
             template_name="registration/password_reset_form.html",
             email_template_name="registration/password_reset_email.html",
             subject_template_name="registration/password_reset_subject.txt",
-            from_email="Aqua Classic Water Filters <zainaamir516@gmail.com>",
+            from_email="Aqua Classic Water Filters <info@aquaclassic.com>",
             success_url=reverse_lazy("password_reset_done"),
         ),
         name="password_reset",
