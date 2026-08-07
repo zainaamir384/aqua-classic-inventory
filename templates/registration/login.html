@@ -1,62 +1,23 @@
 {% extends "base.html" %}
 {% load static %}
 {% load crispy_forms_tags %}
-{% block page_title %}Login - Aqua Classic Demo{% endblock %}
+{% block page_title %}Login{% endblock %}
 {% block title %}Login{% endblock %}
 
 {% block auth_content %}
-<div class="row justify-content-center align-items-center auth-page w-100 py-4" style="min-height: calc(100vh - 140px);">
-  <div class="col-12 col-sm-10 col-md-8 col-lg-6 col-xxl-5">
-    <div class="card auth-card shadow-lg p-3 border-0" style="background: rgba(18, 26, 44, 0.95); backdrop-filter: blur(12px); border-radius: 16px;">
+<div class="row justify-content-center align-items-center auth-page w-100" style="min-height: calc(100vh - 180px);">
+  <div class="col-12 col-sm-10 col-md-8 col-lg-5 col-xxl-4">
+    <div class="card auth-card shadow-lg p-3">
       <div class="card-body">
         <div class="text-center mb-4">
-          <div class="d-inline-flex align-items-center justify-content-center p-2 rounded-circle mb-2" style="background: rgba(0, 180, 216, 0.1);">
-            <img src="{% static 'brand/aqua-classic-badge.svg' %}" alt="Aqua Classic" style="width:64px;height:64px;">
-          </div>
-          <h2 class="h4 mt-2 mb-1 text-white fw-bold">Aqua Classic Inventory</h2>
-          <p class="text-secondary small mb-0">Sign in to manage inventory, suppliers, and sales.</p>
+          <img src="{% static 'brand/aqua-classic-badge.svg' %}" alt="Aqua Classic" style="width:68px;height:68px;">
+          <h2 class="h4 mt-3 mb-1 text-white fw-bold">Aqua Classic Inventory</h2>
+          <p class="text-secondary small mb-0" style="color: var(--text-secondary) !important;">Sign in to manage inventory, suppliers, and sales.</p>
         </div>
-
-        <!-- 🚀 DEMO QUICK LOGIN SECTION -->
-        <div class="p-3 mb-4 rounded-3 border border-info border-opacity-25" style="background: rgba(0, 180, 216, 0.08);">
-          <div class="d-flex align-items-center justify-content-between mb-2">
-            <span class="badge bg-info text-dark fw-bold text-uppercase px-2 py-1" style="font-size: 0.7rem; tracking: 0.5px;">Live Demo Mode</span>
-            <small class="text-info fw-semibold"><i class="bi bi-lightning-charge-fill me-1"></i>1-Click Quick Access</small>
-          </div>
-          <p class="text-light small mb-3">Explore full features instantly as an Admin or Staff user:</p>
-          <div class="row g-2">
-            <div class="col-6">
-              <a href="{% url 'accounts:demo-login-role' 'owner' %}" class="btn btn-info w-100 py-2 fw-bold text-dark d-flex align-items-center justify-content-center shadow-sm">
-                <i class="bi bi-shield-lock-fill me-2"></i> Demo Owner
-              </a>
-            </div>
-            <div class="col-6">
-              <a href="{% url 'accounts:demo-login-role' 'staff' %}" class="btn btn-outline-info w-100 py-2 fw-bold d-flex align-items-center justify-content-center">
-                <i class="bi bi-person-badge-fill me-2"></i> Demo Staff
-              </a>
-            </div>
-          </div>
-          <div class="mt-2 text-center">
-            <small class="text-muted" style="font-size: 0.75rem;">
-              Credentials: <code>owner / owner1234</code> &nbsp;|&nbsp; <code>staff / staff1234</code>
-            </small>
-          </div>
-        </div>
-
-        <div class="d-flex align-items-center my-3">
-          <hr class="flex-grow-1 text-secondary opacity-25">
-          <span class="px-3 text-secondary small">Or Sign In Manually</span>
-          <hr class="flex-grow-1 text-secondary opacity-25">
-        </div>
-
-        <form method="post" class="form-shell" id="loginForm">
+        <form method="post" class="form-shell">
           {% csrf_token %}
           {{ form|crispy }}
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <div class="btn-group btn-group-sm" role="group">
-              <button type="button" class="btn btn-outline-secondary btn-sm py-0" onclick="fillCredentials('owner', 'owner1234')">Fill Owner</button>
-              <button type="button" class="btn btn-outline-secondary btn-sm py-0" onclick="fillCredentials('staff', 'staff1234')">Fill Staff</button>
-            </div>
+          <div class="d-flex justify-content-end mb-3">
             <a href="{% url 'password_reset' %}" class="small text-info text-decoration-none fw-semibold">Forgot Password?</a>
           </div>
           <button class="btn btn-primary w-100 py-2 fw-semibold" type="submit">Sign in</button>
@@ -65,70 +26,22 @@
     </div>
   </div>
 </div>
-
-<script>
-function fillCredentials(user, pass) {
-  const usernameInput = document.querySelector('input[name="username"]');
-  const passwordInput = document.querySelector('input[name="password"]');
-  if (usernameInput) usernameInput.value = user;
-  if (passwordInput) passwordInput.value = pass;
-}
-</script>
 {% endblock %}
 
 {% block content %}
-<div class="row justify-content-center align-items-center auth-page w-100 py-4" style="min-height: calc(100vh - 140px);">
-  <div class="col-12 col-sm-10 col-md-8 col-lg-6 col-xxl-5">
-    <div class="card auth-card shadow-lg p-3 border-0" style="background: rgba(18, 26, 44, 0.95); backdrop-filter: blur(12px); border-radius: 16px;">
+<div class="row justify-content-center align-items-center auth-page w-100" style="min-height: calc(100vh - 180px);">
+  <div class="col-12 col-sm-10 col-md-8 col-lg-5 col-xxl-4">
+    <div class="card auth-card shadow-lg p-3">
       <div class="card-body">
         <div class="text-center mb-4">
-          <div class="d-inline-flex align-items-center justify-content-center p-2 rounded-circle mb-2" style="background: rgba(0, 180, 216, 0.1);">
-            <img src="{% static 'brand/aqua-classic-badge.svg' %}" alt="Aqua Classic" style="width:64px;height:64px;">
-          </div>
-          <h2 class="h4 mt-2 mb-1 text-white fw-bold">Aqua Classic Inventory</h2>
-          <p class="text-secondary small mb-0">Sign in to manage inventory, suppliers, and sales.</p>
+          <img src="{% static 'brand/aqua-classic-badge.svg' %}" alt="Aqua Classic" style="width:68px;height:68px;">
+          <h2 class="h4 mt-3 mb-1 text-white fw-bold">Aqua Classic Inventory</h2>
+          <p class="text-secondary small mb-0" style="color: var(--text-secondary) !important;">Sign in to manage inventory, suppliers, and sales.</p>
         </div>
-
-        <!-- 🚀 DEMO QUICK LOGIN SECTION -->
-        <div class="p-3 mb-4 rounded-3 border border-info border-opacity-25" style="background: rgba(0, 180, 216, 0.08);">
-          <div class="d-flex align-items-center justify-content-between mb-2">
-            <span class="badge bg-info text-dark fw-bold text-uppercase px-2 py-1" style="font-size: 0.7rem; tracking: 0.5px;">Live Demo Mode</span>
-            <small class="text-info fw-semibold"><i class="bi bi-lightning-charge-fill me-1"></i>1-Click Quick Access</small>
-          </div>
-          <p class="text-light small mb-3">Explore full features instantly as an Admin or Staff user:</p>
-          <div class="row g-2">
-            <div class="col-6">
-              <a href="{% url 'accounts:demo-login-role' 'owner' %}" class="btn btn-info w-100 py-2 fw-bold text-dark d-flex align-items-center justify-content-center shadow-sm">
-                <i class="bi bi-shield-lock-fill me-2"></i> Demo Owner
-              </a>
-            </div>
-            <div class="col-6">
-              <a href="{% url 'accounts:demo-login-role' 'staff' %}" class="btn btn-outline-info w-100 py-2 fw-bold d-flex align-items-center justify-content-center">
-                <i class="bi bi-person-badge-fill me-2"></i> Demo Staff
-              </a>
-            </div>
-          </div>
-          <div class="mt-2 text-center">
-            <small class="text-muted" style="font-size: 0.75rem;">
-              Credentials: <code>owner / owner1234</code> &nbsp;|&nbsp; <code>staff / staff1234</code>
-            </small>
-          </div>
-        </div>
-
-        <div class="d-flex align-items-center my-3">
-          <hr class="flex-grow-1 text-secondary opacity-25">
-          <span class="px-3 text-secondary small">Or Sign In Manually</span>
-          <hr class="flex-grow-1 text-secondary opacity-25">
-        </div>
-
         <form method="post" class="form-shell">
           {% csrf_token %}
           {{ form|crispy }}
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <div class="btn-group btn-group-sm" role="group">
-              <button type="button" class="btn btn-outline-secondary btn-sm py-0" onclick="fillCredentials('owner', 'owner1234')">Fill Owner</button>
-              <button type="button" class="btn btn-outline-secondary btn-sm py-0" onclick="fillCredentials('staff', 'staff1234')">Fill Staff</button>
-            </div>
+          <div class="d-flex justify-content-end mb-3">
             <a href="{% url 'password_reset' %}" class="small text-info text-decoration-none fw-semibold">Forgot Password?</a>
           </div>
           <button class="btn btn-primary w-100 py-2 fw-semibold" type="submit">Sign in</button>

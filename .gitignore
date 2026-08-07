@@ -1,7 +1,35 @@
+# Environment variables & secrets
+.env
+.env.*
+*.env
+local_settings.py
+*.key
+*.pem
+secrets/
+
+# Databases
+*.sqlite3
+*.db
+db.sqlite3
+
+# Virtual environments
 .venv/
 venv/
 ENV/
+env/
+
+# Python bytecode & cache
 __pycache__/
 *.pyc
-.env
-.DS_Store
+*.pyo
+*.pyd
+
+# Deployment & IDE files
+.vercel/
+.idea/
+.vscode/
+*.log
+
+# Static & media files
+staticfiles/
+media/

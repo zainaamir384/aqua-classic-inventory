@@ -79,6 +79,24 @@
     </div>
   </div>
 
+  <!-- Total Combined Business Inventory Asset Valuation Bar -->
+  <div class="card mb-4 border border-primary border-opacity-25 bg-gradient p-3 rounded-3 shadow-sm" style="background: rgba(13, 21, 39, 0.8) !important;">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+      <div>
+        <span class="text-secondary small fw-bold text-uppercase d-block mb-1">💎 TOTAL COMBINED BUSINESS INVENTORY ASSET VALUE</span>
+        <h2 class="h3 text-emerald fw-bold mb-0" style="color: #10b981;">PKR {{ total_combined_inventory_value|floatformat:2 }}</h2>
+      </div>
+      <div class="d-flex gap-2 align-items-center flex-wrap">
+        <span class="badge bg-dark border border-secondary-subtle px-3 py-2 text-cyan fs-6">
+          📦 Raw Parts Value: PKR {{ raw_inventory_value|floatformat:2 }}
+        </span>
+        <span class="badge bg-dark border border-secondary-subtle px-3 py-2 text-warning fs-6">
+          🛠️ Assembled Units Value: PKR {{ assembled_inventory_value|floatformat:2 }}
+        </span>
+      </div>
+    </div>
+  </div>
+
   <!-- Performance Charts Row (Fade-Up on Scroll) -->
   <div class="row g-4 mb-4 fade-up">
     <!-- Daily Sales Performance Bar/Line Chart -->

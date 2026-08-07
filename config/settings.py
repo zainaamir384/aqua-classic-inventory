@@ -3,26 +3,43 @@
 import os
 import shutil
 from pathlib import Path
-
-import environ
-
+from urllib.parse import urlparse, parse_qsl
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-env = environ.Env(
-    DEBUG=(bool, False),
-    SECRET_KEY=(str, "django-insecure-change-me"),
-    ALLOWED_HOSTS=(list, ["*"]),
-    DATABASE_URL=(str, f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
-    EMAIL_BACKEND=(str, "django.core.mail.backends.console.EmailBackend"),
-)
 
-environ.Env.read_env(BASE_DIR / ".env")
+try:
+    import environ
+    env = environ.Env(
+        DEBUG=(bool, False),
+        SECRET_KEY=(str, "django-insecure-change-me"),
+        ALLOWED_HOSTS=(list, ["*"]),
+        DATABASE_URL=(str, f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
+    )
+    if (BASE_DIR / ".env").exists():
+        environ.Env.read_env(BASE_DIR / ".env")
+except ImportError:
+    class env:
+        @staticmethod
+        def str(key, default=""):
+            return os.environ.get(key, default)
+        @staticmethod
+        def bool(key, default=False):
+            val = os.environ.get(key, str(default))
+            return str(val).lower() in ("true", "1", "yes")
+        @staticmethod
+        def int(key, default=0):
+            try:
+                return int(os.environ.get(key, str(default)))
+            except Exception:
+                return default
+        @staticmethod
+        def list(key, default=None):
+            val = os.environ.get(key, "")
+            return [x.strip() for x in val.split(",")] if val else (default or ["*"])
 
-SECRET_KEY = env("SECRET_KEY", default="aqua-classic-vercel-demo-secret-key-2026")
-DEBUG = env.bool("DEBUG", default=True)
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["*"])
-if not ALLOWED_HOSTS or "*" not in ALLOWED_HOSTS:
-    ALLOWED_HOSTS = ["*"]
+SECRET_KEY = os.environ.get("SECRET_KEY", "aqua-classic-vercel-demo-secret-key-2026")
+DEBUG = os.environ.get("DEBUG", "1").lower() in ("true", "1", "yes")
+ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -73,25 +90,31 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-# Vercel Serverless Ephemeral SQLite Support
-IS_VERCEL = bool(os.environ.get("VERCEL") or os.environ.get("VERCEL_ENV"))
-if IS_VERCEL and "sqlite" in env("DATABASE_URL", default="sqlite"):
-    tmp_db = Path("/tmp/db.sqlite3")
-    base_db = BASE_DIR / "db.sqlite3"
-    if not tmp_db.exists() and base_db.exists():
-        try:
-            shutil.copy2(base_db, tmp_db)
-        except Exception:
-            pass
+# Neon PostgreSQL & Database Configuration
+NEON_DB_URL = "postgresql://neondb_owner:npg_l7UEn1NmwyMG@ep-bitter-poetry-ay9mhv57-pooler.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+db_url_str = os.environ.get("DATABASE_URL") or NEON_DB_URL
+tmpPostgres = urlparse(db_url_str) if db_url_str else None
+
+if tmpPostgres and tmpPostgres.scheme in ("postgres", "postgresql"):
     DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": tmp_db if tmp_db.exists() else base_db,
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': tmpPostgres.path.replace('/', ''),
+            'USER': tmpPostgres.username,
+            'PASSWORD': tmpPostgres.password,
+            'HOST': tmpPostgres.hostname,
+            'PORT': tmpPostgres.port or 5432,
+            'OPTIONS': dict(parse_qsl(tmpPostgres.query)),
         }
     }
 else:
+    IS_VERCEL = bool(os.environ.get("VERCEL") or os.environ.get("VERCEL_ENV"))
+    tmp_db = Path("/tmp/db.sqlite3") if IS_VERCEL else BASE_DIR / "db.sqlite3"
     DATABASES = {
-        "default": env.db("DATABASE_URL"),
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": tmp_db,
+        }
     }
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -109,9 +132,16 @@ USE_TZ = True
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
-STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
-WHITENOISE_USE_FINDERS = True
 
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+    },
+}
+WHITENOISE_USE_FINDERS = True
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
@@ -122,14 +152,15 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "dashboard:home"
-EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
-EMAIL_HOST = env("EMAIL_HOST", default="smtp.gmail.com")
-EMAIL_PORT = env.int("EMAIL_PORT", default=587)
-EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
-EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
-EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
-DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default=EMAIL_HOST_USER or "Aqua Classic Inventory <noreply@aquaclassic.com>")
 
-# Session Management
-SESSION_ENGINE = "django.contrib.sessions.backends.db"
-SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True").lower() in ("true", "1", "yes")
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "zainaamir516@gmail.com")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "xxjf qvyz jmgr cxqe")
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "Aqua Classic Water Filters <zainaamir516@gmail.com>")
+
+# Auto-Logout Session Configuration
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_AGE = 86400  # Expire session after 24 hours if browser stays open

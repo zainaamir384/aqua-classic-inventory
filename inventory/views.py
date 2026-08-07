@@ -345,15 +345,29 @@ class AssemblyView(LoginRequiredMixin, FormView):
         if cat_filter:
             qs = qs.filter(category_id=cat_filter)
 
-        context["categories"] = assembled_cats
-        context["selected_category"] = int(cat_filter) if cat_filter.isdigit() else None
-        context["assembled_products"] = (
-            qs.annotate(total_stock=Coalesce(Sum("stock_items__quantity_on_hand"), Decimal("0.000")))
+        from django.db import models
+        assembled_products = list(
+            qs.annotate(
+                total_stock=Coalesce(Sum("stock_items__quantity_on_hand"), Decimal("0"), output_field=models.DecimalField())
+            )
             .select_related("category", "brand")
             .order_by("-updated_at", "-id")
         )
-        can_manage = self.request.user.is_superuser or getattr(self.request.user, "role", None) == "OWNER"
-        context["can_manage"] = can_manage
+
+        for p in assembled_products:
+            p.stock_val = (p.total_stock or Decimal("0")) * (p.cost_price or Decimal("0.00"))
+
+        total_assembled_skus = len(assembled_products)
+        total_assembled_pcs = sum((p.total_stock or Decimal("0")) for p in assembled_products)
+        total_assembled_asset_value = sum(p.stock_val for p in assembled_products)
+
+        context["categories"] = assembled_cats
+        context["selected_category"] = int(cat_filter) if cat_filter.isdigit() else None
+        context["assembled_products"] = assembled_products
+        context["total_assembled_skus"] = total_assembled_skus
+        context["total_assembled_pcs"] = total_assembled_pcs
+        context["total_assembled_asset_value"] = total_assembled_asset_value
+        context["can_manage"] = self.request.user.is_superuser or getattr(self.request.user, "role", None) == "OWNER"
         return context
 
 

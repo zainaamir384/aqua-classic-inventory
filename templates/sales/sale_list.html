@@ -17,33 +17,33 @@
     </div>
   </div>
 
-  <!-- All-Time Sales & Profit Summary Cards -->
+  <!-- TODAY'S ACTIVE SALES SUMMARY CARDS -->
   <div class="row g-3 mb-4">
     <div class="col-12 col-sm-3">
       <div class="kpi-card p-3">
-        <div class="kpi-card__label mb-1">ALL-TIME ORDERS LOGGED</div>
-        <div class="kpi-value text-white" style="font-size: 1.3rem; white-space: nowrap;">{{ sales_list|length }} Orders</div>
+        <div class="kpi-card__label mb-1">TODAY'S ORDERS LOGGED</div>
+        <div class="kpi-value text-white" style="font-size: 1.3rem; white-space: nowrap;">{{ today_orders_count }} Orders</div>
       </div>
     </div>
     <div class="col-12 col-sm-3">
       <div class="kpi-card p-3">
-        <div class="kpi-card__label mb-1">ALL-TIME SALES REVENUE</div>
-        <div class="kpi-value text-cyan" style="font-size: 1.25rem; white-space: nowrap;">PKR {{ total_revenue|default:0|floatformat:2 }}</div>
+        <div class="kpi-card__label mb-1">TODAY'S SALES REVENUE</div>
+        <div class="kpi-value text-cyan" style="font-size: 1.25rem; white-space: nowrap;">PKR {{ today_revenue|default:0|floatformat:2 }}</div>
       </div>
     </div>
     <div class="col-12 col-sm-3">
       <div class="kpi-card p-3">
-        <div class="kpi-card__label mb-1">ESTIMATED NET PROFIT</div>
+        <div class="kpi-card__label mb-1">TODAY'S ESTIMATED PROFIT</div>
         <div class="kpi-value text-emerald" style="font-size: 1.25rem; white-space: nowrap;">
-          PKR {{ total_profit|default:0|floatformat:2 }}
-          <div class="fs-6 text-emerald fw-semibold mt-1">({{ profit_margin|floatformat:1 }}% Margin)</div>
+          PKR {{ today_profit|default:0|floatformat:2 }}
+          <div class="fs-6 text-emerald fw-semibold mt-1">({{ today_margin|floatformat:1 }}% Margin)</div>
         </div>
       </div>
     </div>
     <div class="col-12 col-sm-3">
       <div class="kpi-card p-3">
-        <div class="kpi-card__label mb-1">ALL-TIME ITEMS SOLD</div>
-        <div class="kpi-value text-warning" style="font-size: 1.3rem; white-space: nowrap;">{{ total_items_sold|default:0|floatformat:0 }} pcs</div>
+        <div class="kpi-card__label mb-1">TODAY'S ITEMS SOLD</div>
+        <div class="kpi-value text-warning" style="font-size: 1.3rem; white-space: nowrap;">{{ today_items_sold|default:0|floatformat:0 }} pcs</div>
       </div>
     </div>
   </div>

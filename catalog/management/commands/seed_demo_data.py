@@ -19,7 +19,7 @@ class Command(BaseCommand):
                 username="owner",
                 defaults={
                     "email": "owner@aquaclassic.local",
-                    "first_name": "Demo",
+                    "first_name": "Shop",
                     "last_name": "Owner",
                     "role": User.Role.OWNER,
                     "is_staff": True,
@@ -28,21 +28,6 @@ class Command(BaseCommand):
             )
             owner.set_password("owner1234")
             owner.save()
-
-            staff, _ = User.objects.get_or_create(
-                username="staff",
-                defaults={
-                    "email": "staff@aquaclassic.local",
-                    "first_name": "Demo",
-                    "last_name": "Staff",
-                    "role": User.Role.STAFF,
-                    "is_staff": False,
-                    "is_superuser": False,
-                },
-            )
-            staff.set_password("staff1234")
-            staff.save()
-
 
             categories = {}
             for name, description in [

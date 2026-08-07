@@ -19,10 +19,32 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
         context = super().get_context_data(**kwargs)
         user = self.request.user
-        stock_items = StockItem.objects.select_related("product", "location")
-        total_value = Decimal("0.00")
+        from catalog.models import Category
+        assembled_cats = Category.objects.filter(
+            name__in=[
+                '10" Water Filter (Assembled)',
+                '20" Slim Water Filter (Assembled)',
+                '20" Jumbo Water Filter (Assembled)',
+                'RO Water Filter (Assembled)',
+            ]
+        )
+
+        stock_items = StockItem.objects.select_related("product", "product__category", "location")
+        raw_val = Decimal("0.00")
+        assembled_val = Decimal("0.00")
+
         for item in stock_items:
-            total_value += item.quantity_on_hand * item.product.cost_price
+            item_val = item.quantity_on_hand * item.product.cost_price
+            if item.product.unit_type == Product.UnitType.FINISHED_UNIT or item.product.category in assembled_cats:
+                assembled_val += item_val
+            else:
+                raw_val += item_val
+
+        total_combined_val = raw_val + assembled_val
+
+        context["raw_inventory_value"] = raw_val
+        context["assembled_inventory_value"] = assembled_val
+        context["total_combined_inventory_value"] = total_combined_val
 
         from services.models import ServiceTicket
         sales_rev_total = SaleRecord.objects.aggregate(total=Sum("total_amount"))["total"] or Decimal("0.00")
@@ -127,7 +149,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         context["orders_is_down"] = orders_is_down
         context["profit_margin_str"] = profit_margin_str
         context["can_view_costs"] = user.is_superuser or getattr(user, "role", None) == "OWNER"
-        context["total_stock_value"] = total_value if context["can_view_costs"] else None
+        context["total_stock_value"] = total_combined_val if context["can_view_costs"] else None
         context["total_sales_revenue"] = total_sales_revenue
         context["total_profit"] = total_profit
         context["recent_sales"] = SaleRecord.objects.prefetch_related("items__product").order_by("-created_at")[:5]

@@ -93,6 +93,7 @@ class SaleListView(LoginRequiredMixin, ListView):
         today_cost = sum(s.total_cost for s in today_sales)
         today_profit = today_rev - today_cost
         today_margin = (today_profit / today_rev * Decimal("100.0")) if today_rev > 0 else Decimal("0.0")
+        today_items_sold = sum(item.quantity for s in today_sales for item in s.items.all())
 
         context["today_date"] = today
         context["today_sales"] = today_sales
@@ -103,6 +104,7 @@ class SaleListView(LoginRequiredMixin, ListView):
         context["today_cost"] = today_cost
         context["today_profit"] = today_profit
         context["today_margin"] = today_margin
+        context["today_items_sold"] = today_items_sold
         context["past_days_grouped"] = past_days_grouped
 
         return context
@@ -140,12 +142,10 @@ class SaleFormMixin:
                 "category_id": p.category_id,
                 "category_name": p.category.name if p.category else "",
                 "stock": stock_int,
-                "price": float(p.cost_price or 0.0),
             })
         context["products_json"] = json.dumps(products_data)
         context.setdefault("formset", self.get_formset())
         return context
-
 
     def _save_sale_and_items(self, form, reverse_existing: bool = False):
         from collections import defaultdict
@@ -186,30 +186,63 @@ class SaleFormMixin:
                 if not getattr(sale, "location_id", None):
                     sale.location = get_default_location()
                 sale.save()
-                if reverse_existing:
-                    for existing_item in sale.items.all():
+
+                # Build dictionary of existing quantities per product prior to edit
+                old_items = {}
+                if reverse_existing and sale.pk:
+                    for ex in sale.items.all():
+                        old_items[ex.product_id] = {
+                            "qty": ex.quantity,
+                            "price": ex.sale_price,
+                            "product": ex.product
+                        }
+
+                formset.instance = sale
+                formset.save()
+
+                # Build dictionary of new quantities per product after formset save
+                new_items = {}
+                for item in sale.items.all():
+                    new_items[item.product_id] = {
+                        "qty": item.quantity,
+                        "price": item.sale_price,
+                        "product": item.product
+                    }
+
+                # Calculate stock delta per product
+                all_product_ids = set(old_items.keys()).union(set(new_items.keys()))
+                for pid in all_product_ids:
+                    old_qty = old_items.get(pid, {}).get("qty", Decimal("0"))
+                    new_qty = new_items.get(pid, {}).get("qty", Decimal("0"))
+                    delta = new_qty - old_qty
+
+                    prod = new_items.get(pid, {}).get("product") or old_items.get(pid, {}).get("product")
+                    price = new_items.get(pid, {}).get("price") or old_items.get(pid, {}).get("price") or Decimal("0.00")
+
+                    if delta > 0:
+                        # Quantity increased or new item added -> SALE_OUT for delta
                         record_movement(
-                            product=existing_item.product,
+                            product=prod,
+                            location=sale.location,
+                            movement_type=StockMovement.MovementType.SALE_OUT,
+                            quantity=delta,
+                            created_by=self.request.user,
+                            reference_note=f"Sale #{sale.pk}" + (f" edit (+{delta} pcs)" if reverse_existing else ""),
+                            unit_cost=price,
+                        )
+                    elif delta < 0:
+                        # Quantity reduced or item removed -> RETURN_IN for abs(delta)
+                        return_qty = abs(delta)
+                        record_movement(
+                            product=prod,
                             location=sale.location,
                             movement_type=StockMovement.MovementType.RETURN_IN,
-                            quantity=existing_item.quantity,
+                            quantity=return_qty,
                             created_by=self.request.user,
-                            reference_note=f"Reverse sale #{sale.pk}",
-                            unit_cost=existing_item.sale_price,
+                            reference_note=f"Sale #{sale.pk} edit (-{return_qty} pcs)",
+                            unit_cost=price,
                         )
-                    sale.items.all().delete()
-                formset.instance = sale
-                items = formset.save()
-                for item in items:
-                    record_movement(
-                        product=item.product,
-                        location=sale.location,
-                        movement_type=StockMovement.MovementType.SALE_OUT,
-                        quantity=item.quantity,
-                        created_by=self.request.user,
-                        reference_note=f"Sale #{sale.pk}",
-                        unit_cost=item.sale_price,
-                    )
+
                 sale.recalculate_total()
             return sale
         except ValidationError as e:

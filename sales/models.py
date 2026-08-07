@@ -24,14 +24,12 @@ class SaleRecord(models.Model):
 	def __str__(self) -> str:
 		return f"Sale #{self.pk or 'new'}"
 
-	def recalculate_total(self, save=True):
+	def recalculate_total(self):
 		total = Decimal("0.00")
 		for item in self.items.all():
 			total += item.line_total
 		self.total_amount = total
-		if save and self.pk:
-			self.save(update_fields=["total_amount"])
-
+		self.save(update_fields=["total_amount"])
 	@property
 	def total_quantity(self):
 		return sum((item.quantity for item in self.items.all()), Decimal("0"))

@@ -136,8 +136,19 @@ class ProductListView(LoginRequiredMixin, ListView):
     paginate_by = 50
 
     def get_queryset(self):
-        qs = Product.objects.select_related("category", "brand").annotate(
-            total_stock=models.Sum("stock_items__quantity_on_hand")
+        assembled_cats = Category.objects.filter(
+            name__in=[
+                '10" Water Filter (Assembled)',
+                '20" Slim Water Filter (Assembled)',
+                '20" Jumbo Water Filter (Assembled)',
+                'RO Water Filter (Assembled)',
+            ]
+        )
+        qs = (
+            Product.objects.filter(is_active=True)
+            .exclude(models.Q(category__in=assembled_cats) | models.Q(unit_type=Product.UnitType.FINISHED_UNIT))
+            .select_related("category", "brand")
+            .annotate(total_stock=models.Sum("stock_items__quantity_on_hand"))
         )
         q = self.request.GET.get("q", "").strip()
         category_id = self.request.GET.get("category", "")
@@ -150,11 +161,31 @@ class ProductListView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["page_title"] = "Products & Inventory"
-        context["categories"] = Category.objects.filter(is_active=True).order_by("name")
+        context["page_title"] = "Products & Inventory (Raw Components)"
+        assembled_cats = Category.objects.filter(
+            name__in=[
+                '10" Water Filter (Assembled)',
+                '20" Slim Water Filter (Assembled)',
+                '20" Jumbo Water Filter (Assembled)',
+                'RO Water Filter (Assembled)',
+            ]
+        )
+        context["categories"] = Category.objects.filter(is_active=True).exclude(pk__in=assembled_cats).order_by("name")
         context["selected_category"] = self.request.GET.get("category", "")
         context["search_query"] = self.request.GET.get("q", "")
         context["can_manage"] = self.request.user.is_superuser or getattr(self.request.user, "role", None) == "OWNER"
+
+        products = list(context["products"])
+        for p in products:
+            p.stock_val = (p.total_stock or 0) * (p.cost_price or 0)
+
+        total_value = sum(p.stock_val for p in products)
+        total_stock_pcs = sum(p.total_stock or 0 for p in products)
+
+        context["products"] = products
+        context["total_inventory_value"] = total_value
+        context["total_stock_pcs"] = total_stock_pcs
+        context["total_skus_count"] = len(products)
         return context
 
 
@@ -251,16 +282,30 @@ class ProductDeductStockView(LoginRequiredMixin, View):
         from inventory.services import get_default_location, record_movement
         from sales.models import SaleItem, SaleRecord
 
-        product = get_object_or_404(Product, pk=pk)
+        boxes_str = request.POST.get("boxes", "0").strip()
+        ppb_str = request.POST.get("pieces_per_box", "").strip()
         qty_str = request.POST.get("quantity", "0").strip()
-        reason = request.POST.get("reason", "Sold to Customer").strip()
-        price_str = request.POST.get("sale_price", "").strip()
+        reason = request.POST.get("reason", "Manual Stock Adjustment").strip()
+        price_str = request.POST.get("unit_cost", "").strip() or request.POST.get("sale_price", "").strip()
         note = request.POST.get("note", "").strip()
 
         try:
-            quantity = Decimal(qty_str)
+            boxes = int(boxes_str) if boxes_str else 0
+        except ValueError:
+            boxes = 0
+
+        try:
+            ppb = int(ppb_str) if ppb_str else (product.pieces_per_box or 0)
+        except ValueError:
+            ppb = product.pieces_per_box or 0
+
+        try:
+            quantity = Decimal(qty_str) if qty_str else Decimal("0")
         except Exception:
             quantity = Decimal("0")
+
+        if boxes > 0 and ppb > 0:
+            quantity = Decimal(str(boxes * ppb))
 
         try:
             sale_price = Decimal(price_str) if price_str else product.cost_price
@@ -331,21 +376,27 @@ class ProductAddStockView(LoginRequiredMixin, View):
         from decimal import Decimal
         from django.db import transaction
         from django.shortcuts import get_object_or_404, redirect
-        from inventory.models import StockMovement
+        from inventory.models import StockItem, StockMovement
         from inventory.services import get_default_location, record_movement
         from suppliers.models import PurchaseOrder, PurchaseOrderLineItem, Supplier
 
         product = get_object_or_404(Product, pk=pk)
-        boxes_str = request.POST.get("boxes", "0").strip()
+        location = get_default_location()
+
+        # Get current stock on hand
+        stock_item = StockItem.objects.filter(product=product, location=location).first()
+        current_stock = stock_item.quantity_on_hand if stock_item else Decimal("0")
+
+        boxes_str = request.POST.get("boxes", "").strip()
         ppb_str = request.POST.get("pieces_per_box", "").strip()
-        qty_str = request.POST.get("quantity", "0").strip()
+        new_qty_str = request.POST.get("quantity", "").strip()
         cost_str = request.POST.get("unit_cost", "").strip()
         note = request.POST.get("note", "").strip()
 
         try:
-            boxes = int(boxes_str) if boxes_str else 0
+            boxes = int(boxes_str) if boxes_str != "" else None
         except ValueError:
-            boxes = 0
+            boxes = None
 
         try:
             ppb = int(ppb_str) if ppb_str else (product.pieces_per_box or 0)
@@ -353,79 +404,75 @@ class ProductAddStockView(LoginRequiredMixin, View):
             ppb = product.pieces_per_box or 0
 
         try:
-            quantity = Decimal(qty_str) if qty_str else Decimal("0")
-        except Exception:
-            quantity = Decimal("0")
-
-        try:
             unit_cost = Decimal(cost_str) if cost_str else product.cost_price
         except Exception:
             unit_cost = product.cost_price
 
-        total_qty = Decimal("0")
-        ref_text = "Stock Addition"
-        if boxes > 0 and ppb > 0:
-            total_qty = Decimal(str(boxes * ppb))
-            ref_text = f"Added {boxes} box(es) ({ppb} pcs/box)"
-        elif quantity > 0:
-            total_qty = quantity
-            ref_text = f"Added {quantity} piece(s)"
+        # Calculate new target quantity
+        if boxes is not None and boxes > 0 and ppb > 0:
+            target_stock = current_stock + Decimal(str(boxes * ppb))
+        elif new_qty_str != "":
+            try:
+                target_stock = Decimal(new_qty_str)
+            except Exception:
+                target_stock = current_stock
+        else:
+            target_stock = current_stock
 
-        if total_qty <= 0:
-            messages.error(request, "Please enter either number of boxes or number of pieces to add stock.")
-            return redirect("catalog:product-list")
+        if target_stock < 0:
+            target_stock = Decimal("0")
 
-        location = get_default_location()
+        delta = target_stock - current_stock
+
+        if delta == 0:
+            c_int = int(current_stock) if current_stock == int(current_stock) else float(current_stock)
+            messages.info(request, f"No stock change for '{product.name}'. Current stock remains {c_int} pcs.")
+            referer = request.META.get("HTTP_REFERER")
+            return redirect(referer) if referer else redirect("catalog:product-list")
 
         try:
             with transaction.atomic():
-                # Update product cost price if provided and touch updated_at
+                # Update product cost price / ppb if provided
                 fields_to_update = ["updated_at"]
                 if cost_str and unit_cost > 0:
                     product.cost_price = unit_cost
                     fields_to_update.append("cost_price")
-                    if ppb > 0:
-                        product.pieces_per_box = ppb
-                        fields_to_update.append("pieces_per_box")
+                if ppb > 0 and ppb != product.pieces_per_box:
+                    product.pieces_per_box = ppb
+                    fields_to_update.append("pieces_per_box")
                 product.save(update_fields=fields_to_update)
 
-                # Record stock movement
-                record_movement(
-                    product=product,
-                    location=location,
-                    movement_type=StockMovement.MovementType.PURCHASE_IN,
-                    quantity=total_qty,
-                    created_by=request.user,
-                    reference_note=f"{ref_text} @ PKR {unit_cost:.2f}/pc" + (f": {note}" if note else ""),
-                    unit_cost=unit_cost,
-                )
+                curr_disp = int(current_stock) if current_stock == int(current_stock) else float(current_stock)
+                targ_disp = int(target_stock) if target_stock == int(target_stock) else float(target_stock)
 
-                # Save Purchase Order in Purchase History
-                default_supplier = Supplier.objects.first()
-                if default_supplier:
-                    po = PurchaseOrder.objects.create(
-                        supplier=default_supplier,
-                        created_by=request.user,
-                        status=PurchaseOrder.Status.RECEIVED,
-                        notes=f"Quick stock addition for {product.name}" + (f" ({note})" if note else ""),
-                    )
-                    PurchaseOrderLineItem.objects.create(
-                        purchase_order=po,
+                if delta > 0:
+                    # Addition -> PURCHASE_IN
+                    record_movement(
                         product=product,
-                        ordered_boxes=boxes if boxes > 0 else None,
-                        pieces_per_box=ppb if ppb > 0 else None,
-                        ordered_qty=total_qty,
-                        received_qty=total_qty,
+                        location=location,
+                        movement_type=StockMovement.MovementType.PURCHASE_IN,
+                        quantity=delta,
+                        created_by=request.user,
+                        reference_note=f"Stock Edit: Increased from {curr_disp} to {targ_disp} pcs (+{int(delta) if delta == int(delta) else float(delta)} pcs)" + (f": {note}" if note else ""),
                         unit_cost=unit_cost,
                     )
+                    messages.success(request, f"✅ Stock for '{product.name}' updated! Added +{int(delta) if delta == int(delta) else float(delta)} pcs (New Total: {targ_disp} pcs).")
+                else:
+                    # Deduction -> ADJUSTMENT_OUT
+                    deduct_qty = abs(delta)
+                    record_movement(
+                        product=product,
+                        location=location,
+                        movement_type=StockMovement.MovementType.ADJUSTMENT_OUT,
+                        quantity=deduct_qty,
+                        created_by=request.user,
+                        reference_note=f"Stock Edit: Reduced from {curr_disp} to {targ_disp} pcs (-{int(deduct_qty) if deduct_qty == int(deduct_qty) else float(deduct_qty)} pcs)" + (f": {note}" if note else ""),
+                        unit_cost=unit_cost,
+                    )
+                    messages.success(request, f"✅ Stock for '{product.name}' updated! Deducted -{int(deduct_qty) if deduct_qty == int(deduct_qty) else float(deduct_qty)} pcs (New Total: {targ_disp} pcs).")
 
-            messages.success(
-                request,
-                f"Successfully added {total_qty} piece(s) to stock for '{product.name}' @ PKR {unit_cost:.2f}/pc "
-                f"(Total: PKR {unit_cost * total_qty:.2f}) and logged to purchase history!"
-            )
         except Exception as e:
-            messages.error(request, f"Could not add stock: {e}")
+            messages.error(request, f"Cannot update stock: {e}")
 
         referer = request.META.get("HTTP_REFERER")
         return redirect(referer) if referer else redirect("catalog:product-list")

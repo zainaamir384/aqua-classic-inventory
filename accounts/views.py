@@ -1,5 +1,5 @@
 from django.contrib import messages
-from django.contrib.auth import login as auth_login, update_session_auth_hash
+from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import PasswordContextMixin
 from django.shortcuts import get_object_or_404, redirect
@@ -9,41 +9,6 @@ from django.views.generic import CreateView, FormView, ListView, UpdateView, Vie
 from .forms import AdminPasswordResetForm, StaffCreateForm, StaffUpdateForm
 from .mixins import OwnerRequiredMixin
 from .models import User
-
-
-class DemoLoginView(View):
-    def get(self, request, role="owner"):
-        return self._do_login(request, role)
-
-    def post(self, request, role="owner"):
-        role = request.POST.get("role", role)
-        return self._do_login(request, role)
-
-    def _do_login(self, request, role):
-        username = "staff" if str(role).lower() == "staff" else "owner"
-        password = "staff1234" if username == "staff" else "owner1234"
-        is_owner = username == "owner"
-
-        user, created = User.objects.get_or_create(
-            username=username,
-            defaults={
-                "email": f"{username}@aquaclassic.local",
-                "first_name": "Demo",
-                "last_name": "Staff" if username == "staff" else "Owner",
-                "role": User.Role.STAFF if username == "staff" else User.Role.OWNER,
-                "is_staff": is_owner,
-                "is_superuser": is_owner,
-            },
-        )
-        if created or not user.check_password(password):
-            user.set_password(password)
-            user.save()
-
-        auth_login(request, user)
-        role_label = "Demo Staff" if username == "staff" else "Demo Owner / Admin"
-        messages.success(request, f"Welcome to Aqua Classic Demo! Logged in as {role_label}.")
-        return redirect("dashboard:home")
-
 
 
 class StaffListView(OwnerRequiredMixin, ListView):

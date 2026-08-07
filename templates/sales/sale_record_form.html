@@ -57,7 +57,7 @@
                         <select class="form-select form-select-sm category-filter">
                           <option value="">— All Categories —</option>
                           {% for cat in categories %}
-                            <option value="{{ cat.pk }}">{{ cat.name }}</option>
+                            <option value="{{ cat.pk }}" {% if item_form.instance.product and item_form.instance.product.category_id == cat.pk %}selected{% endif %}>{{ cat.name }}</option>
                           {% endfor %}
                         </select>
                       </div>
@@ -272,10 +272,14 @@
             maxOptions: 1000,
             placeholder: 'Search product...',
             onChange: function(val) {
-              // Auto-fill price if available/empty
               const prod = allProducts.find(p => String(p.id) === String(val));
-              if (prod && priceInput && (!priceInput.value || parseFloat(priceInput.value) === 0)) {
-                if (prod.price) priceInput.value = prod.price;
+              if (prod) {
+                if (prod.category_id && catFilter && catFilter.value !== String(prod.category_id)) {
+                  catFilter.value = prod.category_id;
+                }
+                if (priceInput && (!priceInput.value || parseFloat(priceInput.value) === 0)) {
+                  if (prod.price) priceInput.value = prod.price;
+                }
               }
               updateCalculations();
             }

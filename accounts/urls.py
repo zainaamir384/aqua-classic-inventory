@@ -1,7 +1,6 @@
 from django.urls import path
 
 from .views import (
-    DemoLoginView,
     OwnerPasswordChangeView,
     OwnerProfileEditView,
     OwnerProfileView,
@@ -15,8 +14,6 @@ from .views import (
 app_name = "accounts"
 
 urlpatterns = [
-    path("demo-login/", DemoLoginView.as_view(), name="demo-login"),
-    path("demo-login/<str:role>/", DemoLoginView.as_view(), name="demo-login-role"),
     path("profile/", OwnerProfileView.as_view(), name="profile"),
     path("profile/edit/", OwnerProfileEditView.as_view(), name="profile-edit"),
     path("password-change/", OwnerPasswordChangeView.as_view(), name="change-password"),
