@@ -90,32 +90,15 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-# Neon PostgreSQL & Database Configuration
-NEON_DB_URL = "postgresql://neondb_owner:npg_l7UEn1NmwyMG@ep-bitter-poetry-ay9mhv57-pooler.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
-db_url_str = os.environ.get("DATABASE_URL") or NEON_DB_URL
-tmpPostgres = urlparse(db_url_str) if db_url_str else None
-
-if tmpPostgres and tmpPostgres.scheme in ("postgres", "postgresql"):
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': tmpPostgres.path.replace('/', ''),
-            'USER': tmpPostgres.username,
-            'PASSWORD': tmpPostgres.password,
-            'HOST': tmpPostgres.hostname,
-            'PORT': tmpPostgres.port or 5432,
-            'OPTIONS': dict(parse_qsl(tmpPostgres.query)),
-        }
+# Pure SQLite Database Configuration (Demo Environment)
+IS_VERCEL = bool(os.environ.get("VERCEL") or os.environ.get("VERCEL_ENV"))
+tmp_db = Path("/tmp/db.sqlite3") if IS_VERCEL else BASE_DIR / "db.sqlite3"
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": tmp_db,
     }
-else:
-    IS_VERCEL = bool(os.environ.get("VERCEL") or os.environ.get("VERCEL_ENV"))
-    tmp_db = Path("/tmp/db.sqlite3") if IS_VERCEL else BASE_DIR / "db.sqlite3"
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": tmp_db,
-        }
-    }
+}
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
