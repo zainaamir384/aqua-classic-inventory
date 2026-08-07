@@ -144,6 +144,7 @@ EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "zainaamir516@gmail.com")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "xxjf qvyz jmgr cxqe")
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "Aqua Classic Water Filters <zainaamir516@gmail.com>")
 
-# Auto-Logout Session Configuration
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-SESSION_COOKIE_AGE = 86400  # Expire session after 24 hours if browser stays open
+# Session Configuration (Signed Cookies for Vercel Serverless Persistence)
+SESSION_ENGINE = "django.contrib.sessions.backends.signed_cookies"
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_COOKIE_AGE = 604800  # Keep session active for 7 days
